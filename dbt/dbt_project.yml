@@ -1,0 +1,25 @@
+name: 'subway_system'
+version: '1.0.0'
+config-version: 2
+
+on-run-start:
+  - "{{ ensure_source_tables_exist() }}"
+
+profile: 'subway_profile'
+
+model-paths: ["models"]
+analysis-paths: ["analyses"]
+test-paths: ["tests"]
+seed-paths: ["seeds"]
+macro-paths: ["macros"]
+snapshot-paths: ["snapshots"]
+
+target-path: "target"
+clean-targets:
+  - "target"
+  - "dbt_packages"
+
+models:
+  subway_system:
+    # Configures models to be materialized as views by default
+    +materialized: view

@@ -1,0 +1,2 @@
+train_id,clock_tick,station_id,segment_id,number_of_stops_seen,passenger_count
+101,1,,1,1,1

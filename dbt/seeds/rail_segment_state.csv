@@ -1,0 +1,2 @@
+segment_id,clock_tick,train_queuing_order,train_id,train_position
+1,1,0,101,0.0

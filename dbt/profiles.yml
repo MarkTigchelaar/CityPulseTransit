@@ -1,0 +1,12 @@
+subway_profile:
+  target: dev
+  outputs:
+    dev:
+      type: postgres
+      threads: 1
+      host: localhost
+      port: 5432
+      user: thomas
+      pass: mind_the_gap
+      dbname: subway_system
+      schema: public_transit

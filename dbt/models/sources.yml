@@ -1,0 +1,22 @@
+version: 2
+
+sources:
+  - name: public_transit  # This matches the schema in Postgres
+    tables:
+      # 1. The new table you requested
+      - name: station_passenger_stats
+        description: "Raw telemetry for passenger counts at stations."
+        columns:
+          - name: station_id
+            tests: [not_null]
+          - name: clock_tick
+          - name: total_passengers_in_station
+          - name: passengers_boarded_trains
+          - name: passengers_entered_station
+          - name: passengers_waiting
+          - name: trains_at_platform
+
+      # 2. Other raw tables (if they don't need seed data initialization)
+      # If 'runtime_rail_segment_state' is purely raw, list it here too:
+      # - name: runtime_rail_segment_state
+      #   description: "Live segment status from Kafka"

@@ -1,0 +1,3 @@
+id,passenger_route_id,start_arrival_hour,arrival_minute,travel_code
+1,1,8,0,MTWRF
+1,2,4,0,MTWRF

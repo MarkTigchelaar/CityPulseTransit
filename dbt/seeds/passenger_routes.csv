@@ -1,0 +1,7 @@
+route_id,stop_sequence,station_id
+1,0,1
+1,1,2
+1,2,3
+2,0,3
+2,1,2
+2,2,1

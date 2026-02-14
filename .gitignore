@@ -1,0 +1,18 @@
+# Python
+__pycache__/
+*.py[cod]
+venv/
+.venv/
+.pytest_cache/
+
+# dbt
+dbt_packages/
+target/
+logs/
+
+# Docker
+.env
+
+# OS
+.DS_Store
+Thumbs.db
