@@ -1,6 +1,6 @@
 import pandas as pd
 from sqlalchemy import create_engine
-from data_reader import DataReader
+from simulation.data_reader import DataReader
 
 DB_CONNECTION = "postgresql://thomas:mind_the_gap@localhost:5432/subway_system"
 SCHEMA = "public_transit"
@@ -8,10 +8,9 @@ SCHEMA = "public_transit"
 class TableDataReader(DataReader):
     def __init__(self):
         self.engine = create_engine(DB_CONNECTION)
-        print(f"📖 TableDataReader connected to schema: {SCHEMA}")
+        print(f"connecting to schema: {SCHEMA}")
 
     def _read_table(self, table_name: str) -> pd.DataFrame:
-        """Helper to read a table from the public_transit schema."""
         return pd.read_sql_table(table_name, self.engine, schema=SCHEMA)
 
 
@@ -43,7 +42,7 @@ class TableDataReader(DataReader):
         return self._read_table("runtime_train_state")
 
     def read_station_runtime_state(self) -> pd.DataFrame:
-        return self._read_table("runtime_station_state")
+        return self._read_table("runtime_platform_state")
 
     def read_user_adjustable_variables(self) -> pd.DataFrame:
         return self._read_table("runtime_user_adjustable_variables_state")

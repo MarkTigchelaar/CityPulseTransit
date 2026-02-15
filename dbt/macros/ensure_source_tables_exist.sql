@@ -13,6 +13,16 @@
         trains_at_platform INTEGER,
         created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
     );
+
+    CREATE TABLE IF NOT EXISTS public_transit.train_location (
+        clock_tick INTEGER,
+        train_id INTEGER,
+        segment_id INTEGER,
+        station_id INTEGER,
+        platform_id VARCHAR(50), 
+        train_queuing_order INTEGER,
+        train_position FLOAT
+    );
   {% endset %}
 
   {% do run_query(sql) %}
