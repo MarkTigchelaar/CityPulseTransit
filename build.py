@@ -63,17 +63,26 @@ def is_running_outside_virtual_environment() -> bool:
 
 
 def check_env():
+    # Enables one shot build, despite not having the venv up yet.
+    # Catches first run edge case.
     if is_running_outside_virtual_environment():
         print("Script is running outside venv.")
         create_venv()
-        activate_cmd = f"source {VENV_DIR}/bin/activate"
         if sys.platform == "win32":
-            activate_cmd = f"{VENV_DIR}\\Scripts\\activate"
-        print(
-            "\nPlease activate the virtual environment with the following and run this script again:"
-        )
-        print(activate_cmd)
-        sys.exit(1)
+            venv_python = os.path.join(VENV_DIR, "Scripts", "python.exe")
+        else:
+            venv_python = os.path.join(VENV_DIR, "bin", "python")
+        
+        print(f"🔄 Re-launching build script inside the virtual environment ({venv_python})...\n")
+        
+        # Re-run this exact script using the venv's Python interpreter
+        try:
+            subprocess.check_call([venv_python] + sys.argv)
+        except subprocess.CalledProcessError as e:
+            sys.exit(e.returncode)
+            
+        # Exit the original "outer" system-level Python script cleanly
+        sys.exit(0)
 
 
 def run_dbt_command(command, desc):
@@ -100,26 +109,30 @@ def run_dbt_command(command, desc):
 # This lead to duplication in the Kafka landing tables,
 # and about 45 min of wasted time.
 # I'm probably going to leave this in, since this is a "nuke everything" script.
+# However, just to note, the run script does gracefully tell the processes to quit,
+# So this is a fallback, guarantee if all else fails, despite that being a remote possibilty
 def eradicate_zombies():
-    print("🧹 Sweeping for orphaned Python processes...")
     try:
         # The -f flag tells pkill to match the full command line (e.g., 'python consumer.py')
         subprocess.run(["pkill", "-f", "consumer.py"], stderr=subprocess.DEVNULL)
         subprocess.run(["pkill", "-f", "run.py"], stderr=subprocess.DEVNULL)
-        print("✅ Process table sanitized.")
+        print("Process table sanitized.")
     except Exception as e:
-        print(f"⚠️ Zombie sweep failed (usually fine on Windows/Mac): {e}")
+        print(f"Zombie sweep failed (usually fine on Windows/Mac): {e}")
 
-# Call this at the very beginning of your build sequence!
 
 def main():
-    print("Starting Build...\n")
+    print("Starting build...\n")
     create_env_file()
     check_env()
     eradicate_zombies()
     run_command(
         f"{sys.executable} -m pip install -r requirements.txt",
-        "Installing Python Dependencies",
+        "Installing Python dependencies",
+    )
+    run_command(
+        f"{sys.executable} -m pytest src/",
+        "Running data generator tests"
     )
     run_command(
         "docker compose down -v",
@@ -134,8 +147,8 @@ def main():
         print(i)
         time.sleep(1)
     print("Attempting to build back end with dbt...")
-    run_dbt_command("dbt seed", "Seeding Static Data")
-    run_dbt_command("dbt run", "Building dbt Models")
+    run_dbt_command("dbt build", "Seeding, Building, and Testing dbt models")
+    run_dbt_command("dbt docs generate", "Generating dbt documentation artifacts")
     print("\nBuild Complete")
 
 

@@ -228,7 +228,6 @@ class Station:
     def _process_finished_passengers(self):
         passengers_done_travelling = []
         for passenger in self.passengers:
-            print(f"passenger id {passenger.get_id()} might be finished")
             if passenger.on_last_stop():
                 passengers_done_travelling.append(passenger)
         for passenger in passengers_done_travelling:

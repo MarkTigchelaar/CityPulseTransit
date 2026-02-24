@@ -122,13 +122,13 @@ class ComponentLoader:
             specific_passenger_runtime_state_df = passenger_runtime_state_df[
                 passenger_runtime_state_df["passenger_id"] == passenger_id
             ]
-            first_row = specific_passenger_runtime_state_df.iloc[0]
-            self._make_passenger(first_row, travel_plans)
-            # try:
-            #     first_row = specific_passenger_runtime_state_df.iloc[0]
-            #     self._make_passenger(first_row, travel_plans)
-            # except:
-            #     raise StateLoadingError("No matching passenger runtime state")
+            # first_row = specific_passenger_runtime_state_df.iloc[0]
+            # self._make_passenger(first_row, travel_plans)
+            try:
+                first_row = specific_passenger_runtime_state_df.iloc[0]
+                self._make_passenger(first_row, travel_plans)
+            except:
+                raise StateLoadingError("No matching passenger runtime state")
 
     def _make_travel_plans_for_passenger(
         self, group_df: pd.DataFrame
@@ -151,7 +151,7 @@ class ComponentLoader:
     def _load_passenger_runtime_state(self) -> pd.DataFrame:
         passenger_state_df = self.data_reader.read_passenger_runtime_state()
         current_passenger_state_df = passenger_state_df[
-            passenger_state_df["clock_tick"] == self._current_clock_tick()
+            passenger_state_df["clock_tick"] <= self._current_clock_tick()
         ]
         return current_passenger_state_df.drop_duplicates(subset=["passenger_id"], keep="last")
 
@@ -172,7 +172,7 @@ class ComponentLoader:
         elif pd.notna(station_id):
             self.passengers_in_stations[int(station_id)].append(passenger)
         if pd.notna(train_id) or pd.notna(station_id):
-            passenger.ready_to_start_travelling()
+            passenger.resume_travelling()
             station_id = passenger.start_travelling()
             # validate stops seen is correct
             for recorded_station_id in stops_so_far:

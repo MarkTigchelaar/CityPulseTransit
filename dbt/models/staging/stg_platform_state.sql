@@ -12,7 +12,7 @@ with seed_data as (
 live_data as (
     select
         cast(clock_tick as integer) as clock_tick,
-        cast(station_id as integer) as platform_id,
+        cast(station_id as integer) as station_id,
         cast(route_id as integer) as route_id,
         cast(platform_state as varchar(50)) as platform_state
     from {{ source('public_transit', 'runtime_platform_state') }}

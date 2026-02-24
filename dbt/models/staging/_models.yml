@@ -1,0 +1,73 @@
+version: 2
+
+models:
+  - name: stg_station_passenger__stats
+    description: "Raw log of passenger counts and metrics at each station."
+    columns:
+      - name: station_id
+        tests:
+          - not_null
+      - name: clock_tick
+        tests:
+          - not_null
+      - name: total_passengers_in_station
+      - name: passengers_boarded_trains
+      - name: passengers_entered_station
+      - name: passengers_waiting
+
+  - name: stg_world_clock_state
+    description: "The raw heartbeat and time tracking of the simulation."
+    columns:
+      - name: clock_tick
+        tests:
+          - not_null
+      - name: year
+      - name: day_of_year
+      - name: day_of_week
+      - name: hour_of_day
+      - name: minute
+
+  - name: stg_passenger_state
+    description: "Raw log of passenger travel events combining seed and live data."
+    columns:
+      - name: clock_tick
+      - name: passenger_id
+        tests:
+          - not_null
+      - name: train_id
+      - name: station_id
+      - name: stops_seen_so_far
+        description: "Array of integer station IDs representing the passenger's travel history."
+
+  - name: stg_platform_state
+    description: "Raw log of platform statuses combining seed and live data."
+    columns:
+      - name: clock_tick
+      - name: station_id
+        tests:
+          - not_null
+      - name: route_id
+      - name: platform_state
+
+  - name: stg_rail_segment_state
+    description: "Raw log of trains currently occupying rail segments."
+    columns:
+      - name: segment_id
+        tests:
+          - not_null
+      - name: clock_tick
+      - name: trains_present
+        description: "A JSONB array containing all trains currently on this segment."
+
+  - name: stg_train_state
+    description: "Raw log of live train movements, stop histories, and passenger counts."
+    columns:
+      - name: clock_tick
+      - name: train_id
+        tests:
+          - not_null
+      - name: station_id
+      - name: segment_id
+      - name: stops_seen_so_far
+        description: "Array of integer station IDs representing the train's route history."
+      - name: passenger_count

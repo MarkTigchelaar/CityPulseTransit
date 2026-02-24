@@ -1,0 +1,83 @@
+version: 2
+
+sources:
+  - name: public_transit
+    schema: "{{ env_var('DBT_SOURCE_SCHEMA', 'public_transit') }}"
+    tables:
+      - name: station_passenger_stats
+        description: "Raw log of passenger counts and metrics at each station."
+        columns:
+          - name: station_id
+            tests: [not_null]
+          - name: clock_tick
+            tests: [not_null]
+          - name: total_passengers_in_station
+          - name: passengers_boarded_trains
+          - name: passengers_entered_station
+          - name: passengers_waiting
+          - name: trains_at_platform
+          - name: created_at
+            description: "Timestamp of when the record was ingested into Postgres."
+
+      - name: runtime_passenger_state
+        description: "Append-only log of passenger travel events."
+        columns:
+          - name: clock_tick
+            tests: [not_null]
+          - name: passenger_id
+            tests: [not_null]
+          - name: train_id
+          - name: station_id
+          - name: stops_seen_so_far
+            description: "An array of integer station IDs."
+          - name: created_at
+
+      - name: runtime_rail_segment_state
+        description: "Append-only log of rail segment activity."
+        columns:
+          - name: clock_tick
+            tests: [not_null]
+          - name: segment_id
+            tests: [not_null]
+          - name: trains_present
+            description: "A JSONB array containing all trains currently on this segment."
+          - name: created_at
+
+      - name: runtime_world_clock_state
+        description: "Append-only log of the absolute simulation time."
+        columns:
+          - name: clock_tick
+            tests: [not_null, unique]
+          - name: year
+          - name: day_of_year
+          - name: day_of_week
+          - name: hour_of_day
+          - name: minute
+          - name: created_at
+
+      - name: runtime_train_state
+        description: "Append-only log of live train movements, stop histories, and passenger counts."
+        columns:
+          - name: clock_tick
+            tests: [not_null]
+          - name: train_id
+            tests: [not_null]
+          - name: segment_id
+            description: "Nullable. Populated when the train is actively on a segment."
+          - name: station_id
+            description: "Nullable. Populated when the train is docked at a station."
+          - name: stops_seen_so_far
+            description: "An array of integer station IDs."
+          - name: passenger_count
+          - name: created_at
+
+      - name: runtime_platform_state
+        description: "Append-only log of platform statuses."
+        columns:
+          - name: clock_tick
+            tests: [not_null]
+          - name: station_id
+            tests: [not_null]
+          - name: route_id
+          - name: platform_state
+          - name: created_at

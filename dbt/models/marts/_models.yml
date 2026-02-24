@@ -1,0 +1,96 @@
+version: 2
+
+models:
+  # ----------------------------------------------------------------------------
+  # CLOCK MARTS
+  # ----------------------------------------------------------------------------
+  - name: mart_world_clock
+    description: "The formatted, presentation-ready clock for the Streamlit UI, derived from the current simulation tick."
+    columns:
+      - name: clock_tick
+        tests:
+          - unique
+          - not_null
+      - name: year
+      - name: hour_of_day
+      - name: minute
+      - name: day_name
+        description: "Formatted day of the week (e.g., 'Monday')."
+      - name: month_name
+        description: "Formatted month (e.g., 'February')."
+      - name: day_of_month
+
+  # ----------------------------------------------------------------------------
+  # ANALYTICS MARTS
+  # ----------------------------------------------------------------------------
+  - name: mart_live_headways
+    description: "Live train spacing metrics determining if trains are bunched, gapped, or optimal."
+    columns:
+      - name: train_id
+        tests:
+          - unique
+          - not_null
+      - name: route_id
+      - name: train_ahead_id
+      - name: gap_km
+      - name: spacing_health
+
+  - name: mart_live_system_kpis
+    description: "High-level aggregated metrics for the entire transit network."
+    columns:
+      - name: total_passengers_in_system
+      - name: total_passengers_riding
+      - name: total_passengers_waiting
+      - name: avg_network_utilization_pct
+      - name: active_trains
+
+  - name: mart_live_wait_times
+    description: "Unpivoted aggregate wait time metrics (Min, Max, Avg) formatted directly for Altair visualizations."
+    columns:
+      - name: metric
+        tests:
+          - not_null
+      - name: wait_time
+
+  - name: mart_live_station_crowding
+    description: "Live snapshot of passenger crowding and waiting metrics per station."
+    columns:
+      - name: station_id
+        tests:
+          - unique
+          - not_null
+      - name: station_name
+      - name: total_passengers_in_station
+      - name: passengers_waiting
+
+  # ----------------------------------------------------------------------------
+  # MAP MARTS
+  # ----------------------------------------------------------------------------
+  - name: mart_system_topology_edges
+    description: "Defines the physical directed edges between stations for map plotting."
+    columns:
+      - name: route_id
+      - name: station_name
+      - name: next_station_name
+
+  - name: mart_route_topology
+    description: "Static presentation of route sequences and cumulative distances."
+    columns:
+      - name: route_id
+      - name: stop_sequence
+      - name: station_name
+      - name: segment_km
+      - name: distance_from_start_km
+
+  - name: mart_live_train_positions
+    description: "Presentation-ready view of live train positions, statuses, and utilization."
+    columns:
+      - name: train_id
+        tests:
+          - unique
+          - not_null
+      - name: route_id
+      - name: status
+      - name: passenger_count
+      - name: utilization_pct
+      - name: distance_from_start_km

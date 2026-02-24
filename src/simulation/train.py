@@ -29,10 +29,10 @@ class Train:
     def embark_passenger(self, passenger: Passenger):
         if self.at_capacity():
             raise Exception("Attempted to add passenger to train, when full")
+
         self.passengers[passenger.get_id()] = passenger
 
     def disembark_passengers(self, current_station_id: int) -> list[Passenger]:
-        print("disembarking passengers")
         passengers_to_disembark = []
         next_stop = self.get_next_station_id_on_route(current_station_id)
         for passenger in self.passengers.values():
@@ -42,8 +42,6 @@ class Train:
                 passenger.get_next_station_id_on_route(current_station_id) != next_stop
             ):
                 passengers_to_disembark.append(passenger)
-            else:
-                print(f"Not at the end of the journey? {next_stop}, and {passenger.station_ids_visited}")
         for passenger in passengers_to_disembark:
             self.passengers.pop(passenger.get_id())
         return passengers_to_disembark
@@ -86,15 +84,13 @@ class Train:
         else:
             raise Exception("Train in unknown invalid state")
 
-
     def produce_state(self, station_id: int = None, segment_id: int = None):
         state = {
             "train_id": self.id,
             "clock_tick": self.clock.get_current_clock_tick(),
             "station_id": station_id,
             "segment_id": segment_id,
-            #"stops_seen_so_far": "{" + ",".join(map(str, self.station_ids_visited)) + "}",
             "stops_seen_so_far": deepcopy(self.station_ids_visited),
-            "passenger_count": self.passenger_count()
+            "passenger_count": self.passenger_count(),
         }
         self.system_event_bus.log_train_state(state)

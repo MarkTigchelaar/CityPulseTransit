@@ -15,13 +15,13 @@ class TransitSystem:
         print("Transit system is ready.")
 
 
-    def down(self):
-        print("Transit system has been shut down.")
-
     def run(self):
         print("Transit system is running.")
-        for i in range(200):
-            print(f"--- ⏱️ Tick {i+1} ---")
+        start_tick = self.world_clock.get_current_clock_tick()
+        stop_tick = 21 - start_tick
+        print(f"stop tick: {stop_tick}")
+        for i in range(stop_tick):
+            print(f"--- ⏱️ Tick {start_tick + i+1} ---")
             self.run_once()
             time.sleep(1)
         print("🛑 Debug Run Complete.")

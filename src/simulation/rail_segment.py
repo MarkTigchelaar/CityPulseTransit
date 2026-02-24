@@ -17,7 +17,7 @@ class TrainWithLocation:
         self.speed = speed
 
     def get_position(self) -> float:
-        return self.position_km
+        return int(self.position_km * 1000) / 1000.0
 
     def move(self):
         self.position_km += self.speed
@@ -65,7 +65,7 @@ class RailSegment:
         return {
             "segment_id": self.get_id(),
             "clock_tick": self.clock.get_current_clock_tick(),
-            "trains_present": json.dumps(self._make_train_id_list()),
+            "trains_present": self._make_train_id_list(),
         }
 
     def _make_train_id_list(self) -> list[dict]:
