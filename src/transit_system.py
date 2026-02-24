@@ -12,7 +12,6 @@ class TransitSystem:
         self.rail_segments = component_loader.get_rail_segments()
         self.passengers = component_loader.get_passengers()
         self.world_clock = component_loader.get_world_clock()
-        self.user_variables = component_loader.get_user_adjustable_variables()
         print("Transit system is ready.")
 
 
@@ -21,9 +20,11 @@ class TransitSystem:
 
     def run(self):
         print("Transit system is running.")
-        for _ in range(20):
+        for i in range(200):
+            print(f"--- ⏱️ Tick {i+1} ---")
             self.run_once()
             time.sleep(1)
+        print("🛑 Debug Run Complete.")
             
     def run_once(self):
         self.world_clock.tick()
@@ -31,7 +32,6 @@ class TransitSystem:
         self._process_passengers()
         self._process_stations()
         self._process_rail_segments()
-        self.user_variables.send_update(self.world_clock.get_current_clock_tick())
 
     def _process_passengers(self):
         for passenger in self.passengers:
@@ -50,6 +50,7 @@ class TransitSystem:
             segment.process()
 
 if __name__ == "__main__":
+    time.sleep(5)
     data_reader = TableDataReader()
     producer = LiveProducer()
     component_loader = ComponentLoader(data_reader, producer)

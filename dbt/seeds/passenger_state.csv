@@ -1,2 +1,2 @@
-clock_tick,passenger_id,train_id,station_id,number_of_stops_seen
-1,1,101,,1
+clock_tick,passenger_id,train_id,station_id,status,stops_seen_so_far
+1,1,101,,moving,"{1}"

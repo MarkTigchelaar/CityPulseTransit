@@ -1,2 +1,7 @@
-train_id,clock_tick,station_id,segment_id,number_of_stops_seen,passenger_count
-101,1,,1,1,1
+clock_tick,train_id,segment_id,station_id,stops_seen_so_far,passenger_count
+1,101,1,,"{1}",1
+1,102,2,,"{1,2,3,2}",0
+1,103,3,,"{1,2}",0
+1,104,3,,"{1,2}",0
+1,201,4,,"{2,3}",0
+1,202,3,,"{2}",0

@@ -1,5 +1,4 @@
 from simulation.constants import TravelDays
-from simulation.user_adjustable_variables import UserAdjustableVariables
 from simulation.system_event_bus import SystemEventBus
 
 
@@ -8,16 +7,18 @@ class WorldClock:
         self,
         clock_tick: int,
         day_of_week: str,
+        year: int,
+        day_of_year: int,
         hour_of_day: int,
         minute: int,
-        clock_rate_adjuster: UserAdjustableVariables,
         system_event_bus: SystemEventBus,
     ):
         self.clock_tick = clock_tick
         self.day_of_week: str = TravelDays.from_code(day_of_week)
+        self.day_of_year = day_of_year
+        self.year = year
         self.hour_of_day = hour_of_day
         self.minute = minute
-        self.clock_rate_adjuster = clock_rate_adjuster
         self.system_event_bus = system_event_bus
 
 
@@ -37,6 +38,10 @@ class WorldClock:
             self.hour_of_day = 0
             self.minute = 0
             self.day_of_week = TravelDays.next_day(self.day_of_week)
+            self.day_of_year += 1
+        if self.day_of_year > 365:
+            self.year += 1
+            self.day_of_year = 1
         self._send_time_update_event()
 
     def _send_time_update_event(self):
@@ -44,6 +49,8 @@ class WorldClock:
             {
                 "clock_tick": self.clock_tick,
                 "day_of_week": self.day_of_week.value,
+                "year": self.year,
+                "day_of_year": self.day_of_year,
                 "hour_of_day": self.hour_of_day,
                 "minute": self.minute,
             },

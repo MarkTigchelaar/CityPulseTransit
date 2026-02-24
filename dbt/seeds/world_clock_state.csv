@@ -1,2 +1,2 @@
-clock_tick,day_of_week,hour_of_day,minute
-1,M,8,0
+clock_tick,year,day_of_year,day_of_week,hour_of_day,minute
+1,2026,53,M,8,0

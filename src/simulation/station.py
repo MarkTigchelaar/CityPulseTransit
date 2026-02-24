@@ -88,7 +88,6 @@ class Platform:
 
     def remove_train(self) -> Train:
         self.platform_state = PlatformState.Empty
-        self.log_train_state()
         train = self.present_train
         self.present_train = None
         return train
@@ -229,6 +228,7 @@ class Station:
     def _process_finished_passengers(self):
         passengers_done_travelling = []
         for passenger in self.passengers:
+            print(f"passenger id {passenger.get_id()} might be finished")
             if passenger.on_last_stop():
                 passengers_done_travelling.append(passenger)
         for passenger in passengers_done_travelling:
@@ -269,17 +269,10 @@ class Station:
 
     def _log_current_traffic(self):
         passengers_in_trains = 0
-        trains_at_platforms = []
         for platform in self.platforms:
             platform.produce_state(self.clock.get_current_clock_tick())
             passengers_in_trains += platform.current_train_passenger_count()
-            if platform.has_train():
-                trains_at_platforms.append(
-                    {
-                        "id": platform.current_train_id(),
-                        "position": platform.get_route_id(),
-                    }
-                )
+
         passengers_waiting = len(self.passengers)
         total_passengers_in_station = passengers_in_trains + passengers_waiting
         state = {
@@ -291,14 +284,17 @@ class Station:
             "passengers_waiting": passengers_waiting,
         }
         self.system_event_bus.log_station_state(state)
-        self.system_event_bus.log_train_location_state(
-            {
-                "station_id": self.id,
-                "clock_tick": self.clock.get_current_clock_tick(),
-                "trains_present": trains_at_platforms,
-                "segment_id": None,
-                "station_id": self.id
-            }
-        )
         self.passengers_boarded_trains = 0
         self.passengers_entered_station = 0
+
+    # def _make_train_id_list(self) -> list[dict]:
+    #     trains_at_platforms = []
+    #     for platform in self.platforms:
+    #         if platform.has_train():
+    #             trains_at_platforms.append(
+    #                 {
+    #                     "id": platform.current_train_id(),
+    #                     "position": platform.get_route_id(),
+    #                 }
+    #             )
+    #     return trains_at_platforms

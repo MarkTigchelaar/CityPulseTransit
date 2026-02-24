@@ -14,6 +14,7 @@ ENV_DEFAULTS = {
     "POSTGRES_USER": "thomas",
     "POSTGRES_PASSWORD": "mind_the_gap",
     "POSTGRES_DB": "subway_system",
+    "DBT_SOURCE_SCHEMA": "public_transit",
 }
 
 
@@ -95,10 +96,27 @@ def run_dbt_command(command, desc):
         os.chdir(original_dir)
 
 
+# during development, I found that some consumers can be zombified when pressing CTRL + C
+# This lead to duplication in the Kafka landing tables,
+# and about 45 min of wasted time.
+# I'm probably going to leave this in, since this is a "nuke everything" script.
+def eradicate_zombies():
+    print("🧹 Sweeping for orphaned Python processes...")
+    try:
+        # The -f flag tells pkill to match the full command line (e.g., 'python consumer.py')
+        subprocess.run(["pkill", "-f", "consumer.py"], stderr=subprocess.DEVNULL)
+        subprocess.run(["pkill", "-f", "run.py"], stderr=subprocess.DEVNULL)
+        print("✅ Process table sanitized.")
+    except Exception as e:
+        print(f"⚠️ Zombie sweep failed (usually fine on Windows/Mac): {e}")
+
+# Call this at the very beginning of your build sequence!
+
 def main():
     print("Starting Build...\n")
     create_env_file()
     check_env()
+    eradicate_zombies()
     run_command(
         f"{sys.executable} -m pip install -r requirements.txt",
         "Installing Python Dependencies",

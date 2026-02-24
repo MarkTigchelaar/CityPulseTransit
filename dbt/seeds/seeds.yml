@@ -1,0 +1,28 @@
+version: 2
+
+seeds:
+  - name: passenger_state
+    config:
+      column_types:
+        status: varchar(15)
+        stops_seen_so_far: "integer[]"
+  - name: rail_segment_state
+    config:
+      column_types:
+        trains_present: "jsonb"
+  - name: train_state
+    config:
+      column_types:
+        stops_seen_so_far: "integer[]"
+  - name: trains
+    columns:
+      - name: train_id
+        tests:
+          - unique
+          - not_null
+  - name: stations
+    columns:
+      - name: station_id
+        tests:
+          - unique
+          - not_null

@@ -15,9 +15,6 @@ class SystemEventBus:
     def __init__(self, producer: Producer):
         self.producer = producer
 
-    def log_train_location_state(self, state: dict[str, Any]):
-        self.producer.train_location_update(state)
-
     def log_train_state(self, state: dict[str, Any]):
         self.producer.train_state(state)
 
@@ -35,6 +32,3 @@ class SystemEventBus:
 
     def log_world_clock_state(self, state: dict[str, Any]):
         self.producer.world_clock_state(state)
-
-    def log_user_adjustable_variables(self, state: dict[str, Any]):
-        self.producer.user_adjustable_variables_state(state)

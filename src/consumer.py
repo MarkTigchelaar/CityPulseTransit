@@ -1,21 +1,23 @@
 import json
 import time
 from kafka import KafkaConsumer
-from sqlalchemy import create_engine
+from sqlalchemy import create_engine, exc
+from sqlalchemy.dialects.postgresql import JSONB, ARRAY, INTEGER
 import pandas as pd
 import uuid
 from copy import copy
 
 # --- Configuration ---
-# Map Kafka Topics to Database Table Names
+# Map Kafka Topics to landing tables
 TOPIC_MAPPING = {
-    "train_status": "runtime_train_state",
+    
     "station_status": "station_passenger_stats",
     "rail_segments": "runtime_rail_segment_state", 
     "platform_status": "runtime_platform_state",
-    "user_adjustable_variables": "runtime_user_adjustable_variables_state",
     "world_clock": "runtime_world_clock_state",
-    "train_location": "train_location"
+    "passenger_travelling_state": "runtime_passenger_state",
+    "station_status": "station_passenger_stats",
+    "train_status": "runtime_train_state",
 }
 
 BATCH_SIZE = 1
@@ -31,7 +33,7 @@ def consume_and_store():
     consumer = KafkaConsumer(
         *topics,  # Unpack the list to subscribe to all of them
         bootstrap_servers=['localhost:9092'],
-        group_id=f'subway_group_{uuid.uuid4()}',
+        group_id=f'transit_group',
         auto_offset_reset='earliest',
         value_deserializer=lambda x: json.loads(x.decode('utf-8'))
     )
@@ -47,69 +49,26 @@ def consume_and_store():
         if topic in buffers:
             buffers[topic].append(data)
             if len(buffers[topic]) >= BATCH_SIZE:
-                unpack_lists(buffers, topic)
                 target_table = TOPIC_MAPPING[topic]
                 insert_batch(engine, buffers[topic], target_table)
                 buffers[topic] = []
 
-def insert_batch(engine, data_list, table_name):
+def insert_batch(db_engine, data_list, table_name):
     if not data_list:
         return
-    try:
-        with engine.connect() as conn:
-            df = pd.DataFrame(data_list)
-            df.to_sql(table_name, conn, 
-                      if_exists='append', 
-                      schema="public_transit", 
-                      index=False)
-            print(f"Inserted {len(data_list)} records into {table_name}")
-    except Exception as e:
-        print(f"Error inserting into {table_name}: {e}")
+        
+    #try:
+    with db_engine.begin() as conn:
+        df = pd.DataFrame(data_list)
+        df.to_sql(table_name, conn, 
+                    if_exists='append', 
+                    schema="public_transit", 
+                    index=False)
+    # except exc.SQLAlchemyError as e:
+    #     print(f"\n❌ TRUE DB ERROR inserting into {table_name}:\n{e}\n")
+    # except Exception as e:
+    #     print(f"\n❌ GENERAL ERROR inserting into {table_name}:\n{e}\n")
 
-
-def unpack_lists(buffers, topic):
-    if topic == 'rail_segments':
-        segment_rows = buffers[topic]
-        unpacked_rows = []
-        for row in segment_rows:
-            trains_present = row["trains_present"]
-            if len(trains_present) < 1:
-                row.pop("trains_present")
-                row["train_id"] = None
-                row["train_position"] = None
-                row["train_queuing_order"] = None
-                unpacked_rows.append(row)
-                continue
-            row.pop("trains_present")
-            for i, train_map in enumerate(trains_present):
-                copied_row = copy(row)
-                copied_row["train_id"] = train_map["id"]
-                copied_row["train_position"] = train_map["position"]
-                copied_row["train_queuing_order"] = i
-                unpacked_rows.append(copied_row)
-        buffers[topic] = unpacked_rows
-
-    elif topic == "train_location":
-        segment_rows = buffers[topic]
-        unpacked_rows = []
-        for row in segment_rows:
-            trains_present = row["trains_present"]
-            if len(trains_present) < 1:
-                row.pop("trains_present")
-                row["train_id"] = None
-                row["train_position"] = None
-                row["train_queuing_order"] = None
-                unpacked_rows.append(row)
-                continue
-            row.pop("trains_present")
-            for i, train_map in enumerate(trains_present):
-                copied_row = copy(row)
-                copied_row["train_id"] = train_map["id"]
-                copied_row["train_position"] = train_map["position"]
-                copied_row["train_queuing_order"] = i
-                unpacked_rows.append(copied_row)
-        buffers[topic] = unpacked_rows
-    
 
     
 if __name__ == "__main__":

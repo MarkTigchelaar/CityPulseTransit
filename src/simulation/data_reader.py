@@ -21,10 +21,6 @@ class DataReader(ABC):
         raise NotImplementedError()
 
     @abstractmethod
-    def read_user_adjustable_variables(self) -> pd.DataFrame:
-        raise NotImplementedError()
-
-    @abstractmethod
     def read_train_configuration(self) -> pd.DataFrame:
         raise NotImplementedError()
 

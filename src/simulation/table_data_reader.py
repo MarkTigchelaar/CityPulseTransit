@@ -36,19 +36,16 @@ class TableDataReader(DataReader):
 
     # read runtime state
     def read_world_clock_state(self) -> pd.DataFrame:
-        return self._read_table("runtime_world_clock_state")
+        return self._read_table("stg_world_clock_state")
 
     def read_train_runtime_state(self) -> pd.DataFrame:
-        return self._read_table("runtime_train_state")
+        return self._read_table("stg_train_state")
 
     def read_station_runtime_state(self) -> pd.DataFrame:
-        return self._read_table("runtime_platform_state")
-
-    def read_user_adjustable_variables(self) -> pd.DataFrame:
-        return self._read_table("runtime_user_adjustable_variables_state")
+        return self._read_table("stg_platform_state")
 
     def read_passenger_runtime_state(self) -> pd.DataFrame:
-        return self._read_table("runtime_passenger_state")
+        return self._read_table("stg_passenger_state")
 
     def read_rail_segment_runtime_state(self) -> pd.DataFrame:
-        return self._read_table("runtime_rail_segment_state")
+        return self._read_table("stg_rail_segment_state")

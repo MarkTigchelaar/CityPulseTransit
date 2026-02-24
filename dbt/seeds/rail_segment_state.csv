@@ -1,2 +1,5 @@
-segment_id,clock_tick,train_queuing_order,train_id,train_position
-1,1,0,101,0.0
+segment_id,clock_tick,trains_present
+1,1,"[{""id"": 101, ""position_km"": 0.0}]"
+2,1,"[{""id"": 102, ""position_km"": 1.5}]"
+3,1,"[{""id"": 103, ""position_km"": 1.1}, {""id"": 202, ""position_km"": 0.8}, {""id"": 104, ""position_km"": 0.5}]"
+4,1,"[{""id"": 201, ""position_km"": 0.6}]"

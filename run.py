@@ -38,11 +38,12 @@ def main():
         cwd=os.getcwd()
     )
     processes.append(p_producer)
+    #p_producer.wait()
 
 
     print("Launching Dashboard...")
     p_dashboard = subprocess.Popen(
-        ["streamlit", "run", "src/dashboard.py"],
+        ["streamlit", "run", "src/dashboard.py", "--server.headless=true"],
         cwd=os.getcwd()
     )
     processes.append(p_dashboard)
@@ -52,3 +53,54 @@ def main():
 
 if __name__ == "__main__":
     main()
+
+
+# class SimulationRunner:
+#     def __init__(self):
+#         self.running = True
+#         # 1. Bind the "Kill Signals" (Ctrl+C from keyboard, Stop from Docker)
+#         signal.signal(signal.SIGINT, self.shutdown)
+#         signal.signal(signal.SIGTERM, self.shutdown)
+
+#     def shutdown(self, signum, frame):
+#         """
+#         This runs when you hit Ctrl+C.
+#         """
+#         print(f"\n[STOP] Received signal {signum}. Stopping gracefully...")
+#         self.running = False
+
+#     def run(self):
+#         print("[START] Simulation starting...")
+        
+#         # 2. The Main Loop checks 'self.running' instead of 'True'
+#         while self.running:
+#             try:
+#                 # --- YOUR SIMULATION LOGIC HERE ---
+#                 self.ti__ck() 
+#                 time.sleep(1) # or whatever your sleep is
+#                 # ----------------------------------
+#             except Exception as e:
+#                 print(f"[ERROR] Crash: {e}")
+#                 self.cleanup()
+#                 sys.exit(1)
+        
+#         # 3. Loop exited? Run cleanup!
+#         self.cleanup()
+
+#     def cleanup(self):
+#         """
+#         The critical part: Tell the DB we are stopped.
+#         """
+#         print("[CLEANUP] updating system state to 'STOPPED'...")
+        
+#         # TODO: Run your SQL update here
+#         # UPDATE system_state SET is_running = false, status = 'STOPPED' WHERE ...
+        
+#         # TODO: Close Kafka producers / DB connections if needed
+        
+#         print("[DONE] System is safe to restart.")
+#         sys.exit(0)
+
+# if __name__ == "__main__":
+#     sim = SimulationRunner()
+#     sim.run()

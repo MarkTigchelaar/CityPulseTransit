@@ -11,13 +11,14 @@ class Passenger:
         travel_plans: list[TravelPlan],
         world_clock: WorldClock,
         system_event_bus: SystemEventBus,
+        stops_so_far: list[int],
     ):
         self.id = int(id)
         self.travel_plans = travel_plans
         self.is_travelling = False
         self.clock = world_clock
         self.current_route: Route = None
-        self.station_ids_visited = []
+        self.station_ids_visited = stops_so_far
         self.system_event_bus = system_event_bus
 
     def ready_to_start_travelling(self) -> bool:
@@ -69,19 +70,19 @@ class Passenger:
         )
 
     def log_station_entry(self, station_id: int, train_id: int = None):
-        self._log_passenger_travelling_state("arriving", station_id, train_id)
+        self._log_passenger_travelling_state(station_id, train_id)
 
     def log_station_exit(self, station_id: int, train_id: int = None):
-        self._log_passenger_travelling_state("departing", station_id, train_id)
+        self._log_passenger_travelling_state(station_id, train_id)
 
     def _log_passenger_travelling_state(
-        self, status: str, station_id: int, train_id: int = None
+        self, station_id: int, train_id: int = None
     ):
         state = {
             "passenger_id": self.id,
             "clock_tick": self.clock.get_current_clock_tick(),
             "station_id": station_id,
             "train_id": train_id,
-            "status": status,
+            "stops_seen_so_far": "{" + ",".join(map(str, self.station_ids_visited)) + "}"
         }
         self.system_event_bus.log_passenger_travelling_state(state)

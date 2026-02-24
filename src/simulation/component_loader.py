@@ -9,7 +9,6 @@ from simulation.rail_segment import RailSegment
 from simulation.passenger import Passenger
 from simulation.travel_plan import TravelPlan
 from simulation.world_clock import WorldClock
-from simulation.user_adjustable_variables import UserAdjustableVariables
 from simulation.constants import PlatformState
 from simulation.data_reader import DataReader
 from simulation.producer import Producer
@@ -40,7 +39,6 @@ class ComponentLoader:
         self.passenger_routes_lookup: dict[int, Route] = {}
 
         self.world_clock = None
-        self.user_adjustable_variables = None
         self.system_event_bus = SystemEventBus(producer)
 
     def get_stations(self) -> dict[Station]:
@@ -74,12 +72,8 @@ class ComponentLoader:
     def get_world_clock(self) -> WorldClock:
         return self.world_clock
 
-    def get_user_adjustable_variables(self) -> UserAdjustableVariables:
-        return self.user_adjustable_variables
-
     def load_system_components(self) -> None:
         self._load_world_clock()
-        self._load_user_adjustable_variables()
         self._load_passengers()
         self._load_trains()
         self._load_rail_segments()
@@ -103,28 +97,16 @@ class ComponentLoader:
 
     def _load_world_clock(self) -> None:
         clock_df = self.data_reader.read_world_clock_state()
+        if clock_df.empty:
+            raise Exception("clock empty")
         latest_row = clock_df.sort_values(by="clock_tick", ascending=False).iloc[0]
         self.world_clock = WorldClock(
             clock_tick=int(latest_row["clock_tick"]),
             day_of_week=str(latest_row["day_of_week"]),
+            year=int(latest_row["year"]),
+            day_of_year=int(latest_row["day_of_year"]),
             hour_of_day=int(latest_row["hour_of_day"]),
             minute=int(latest_row["minute"]),
-            clock_rate_adjuster=self.user_adjustable_variables,
-            system_event_bus=self.system_event_bus,
-        )
-
-    def _load_user_adjustable_variables(self) -> UserAdjustableVariables:
-        variables_df = self.data_reader.read_user_adjustable_variables()
-        latest_row = variables_df[
-            variables_df["clock_tick"] == self._current_clock_tick()
-        ]
-        if latest_row.empty:
-            raise ConfigurationError("No user variables found")
-        clock_rate = int(latest_row.iloc[0]["clock_rate"])
-        train_speed = int(latest_row.iloc[0]["train_speed"])
-        self.user_adjustable_variables = UserAdjustableVariables(
-            clock_rate=clock_rate,
-            train_speed=train_speed,
             system_event_bus=self.system_event_bus,
         )
 
@@ -140,11 +122,13 @@ class ComponentLoader:
             specific_passenger_runtime_state_df = passenger_runtime_state_df[
                 passenger_runtime_state_df["passenger_id"] == passenger_id
             ]
-            try:
-                first_row = specific_passenger_runtime_state_df.iloc[0]
-                self._make_passenger(first_row, travel_plans)
-            except:
-                raise StateLoadingError("No matching passenger runtime state")
+            first_row = specific_passenger_runtime_state_df.iloc[0]
+            self._make_passenger(first_row, travel_plans)
+            # try:
+            #     first_row = specific_passenger_runtime_state_df.iloc[0]
+            #     self._make_passenger(first_row, travel_plans)
+            # except:
+            #     raise StateLoadingError("No matching passenger runtime state")
 
     def _make_travel_plans_for_passenger(
         self, group_df: pd.DataFrame
@@ -163,33 +147,26 @@ class ComponentLoader:
                 raise ConfigurationError(f"Failed to load travel plans {str(e)}")
         return travel_plans
 
+
     def _load_passenger_runtime_state(self) -> pd.DataFrame:
         passenger_state_df = self.data_reader.read_passenger_runtime_state()
         current_passenger_state_df = passenger_state_df[
             passenger_state_df["clock_tick"] == self._current_clock_tick()
         ]
-        return (
-            current_passenger_state_df.groupby("passenger_id")
-            .agg(
-                {
-                    "train_id": "first",
-                    "station_id": "first",
-                    "number_of_stops_seen": "first",
-                }
-            )
-            .reset_index()
-        )
+        return current_passenger_state_df.drop_duplicates(subset=["passenger_id"], keep="last")
 
     def _make_passenger(self, row: pd.DataFrame, travel_plans: list[TravelPlan]):
+        stops_so_far = row["stops_seen_so_far"]
+        train_id = row["train_id"]
+        station_id = row["station_id"]
         passenger = Passenger(
             id=int(row["passenger_id"]),
             travel_plans=travel_plans,
             world_clock=self.world_clock,
             system_event_bus=self.system_event_bus,
+            stops_so_far=stops_so_far,
         )
-        stops_so_far = int(row["number_of_stops_seen"])
-        train_id = row["train_id"]
-        station_id = row["station_id"]
+
         if pd.notna(train_id):
             self.passengers_in_trains[int(train_id)].append(passenger)
         elif pd.notna(station_id):
@@ -197,13 +174,17 @@ class ComponentLoader:
         if pd.notna(train_id) or pd.notna(station_id):
             passenger.ready_to_start_travelling()
             station_id = passenger.start_travelling()
-            for _ in range(stops_so_far):
-                passenger.add_to_stops_seen_so_far(station_id)
-                station_id = passenger.get_next_station_id_on_route(station_id)
+            # validate stops seen is correct
+            for recorded_station_id in stops_so_far:
                 if station_id is None:
                     raise ConfigurationError(
                         "Configuration for passenger stops is invalid, station id is None"
                     )
+                if recorded_station_id != station_id:
+                    raise StateLoadingError(
+                        "Station Id does not match expected id for given stop number"
+                    )
+                station_id = passenger.get_next_station_id_on_route(station_id)
         self.passengers.append(passenger)
 
     def _load_trains(self) -> None:
@@ -219,11 +200,11 @@ class ComponentLoader:
                 ].iloc[0]
             except:
                 raise StateLoadingError("Train is missing runtime state")
-            stops_seen_so_far = int(current_train_row["number_of_stops_seen"])
+            stops_seen_so_far = [int(station_id) for station_id in current_train_row["stops_seen_so_far"]]
             train = self._make_train(line, stops_seen_so_far)
             self._assign_train_to_location(train, current_train_row)
 
-    def _make_train(self, line: dict[str, int], stops_seen_so_far: int) -> Train:
+    def _make_train(self, line: dict[str, int], stops_seen_so_far: list[int]) -> Train:
         train_id = int(line["train_id"])
         route_id = int(line["route_id"])
         ordering = int(line["ordering"])
@@ -233,6 +214,14 @@ class ComponentLoader:
             route = self.train_routes_lookup[route_id]
         except:
             raise StateLoadingError("Missing route definition")
+        
+        station_ids = route.get_station_ids()
+        if len(stops_seen_so_far) > len(station_ids):
+            raise StateLoadingError("stops seen by train contain more stations than the trains route")
+        for i in range(len(stops_seen_so_far)):
+            if stops_seen_so_far[i] != station_ids[i]:
+                raise StateLoadingError("Mismatch of stations seen against stations on trains route")
+
         passengers = self.passengers_in_trains[train_id]
         try:
             return Train(
@@ -241,7 +230,6 @@ class ComponentLoader:
                 ordering=ordering,
                 capacity=capacity,
                 clock=self.world_clock,
-                train_speed_controller=self.user_adjustable_variables,
                 passengers=passengers,
                 stops_seen_so_far=stops_seen_so_far,
                 system_event_bus=self.system_event_bus,
@@ -251,20 +239,9 @@ class ComponentLoader:
 
     def _load_train_state(self) -> pd.DataFrame:
         train_state_df = self.data_reader.read_train_runtime_state()
-        current_train_state_df = train_state_df[
+        return train_state_df[
             train_state_df["clock_tick"] == self._current_clock_tick()
         ]
-        return (
-            current_train_state_df.groupby("train_id")
-            .agg(
-                {
-                    "station_id": "first",
-                    "segment_id": "first",
-                    "number_of_stops_seen": "first",
-                }
-            )
-            .reset_index()
-        )
 
     def _assign_train_to_location(
         self, train: Train, train_state: pd.DataFrame
@@ -335,6 +312,8 @@ class ComponentLoader:
             segment_id = int(line["segment_id"])
             from_station_id = int(line["from_station_id"])
             to_station_id = int(line["to_station_id"])
+            distance_km = float(line["distance_km"])
+            speed = float(line["speed"])
             ordered_train_position_maps_in_segment = (
                 self._make_ordered_position_maps_for_segment(segment_id)
             )
@@ -342,7 +321,8 @@ class ComponentLoader:
                 segment_id,
                 from_station_id=from_station_id,
                 to_station_id=to_station_id,
-                distance_km=float(line["distance_km"]),
+                distance_km=distance_km,
+                speed=speed,
                 ordered_train_position_maps_in_segment=ordered_train_position_maps_in_segment,
                 system_event_bus=self.system_event_bus,
                 world_clock=self.world_clock,
@@ -359,37 +339,45 @@ class ComponentLoader:
         ordered_train_state_for_segment = self._make_ordered_train_state_for_segment(
             segment_id
         )
-        ordered_train_ids = ordered_train_state_for_segment["train_id"].tolist()
-        ordered_train_positions_in_segment = ordered_train_state_for_segment[
-            "train_position"
-        ].tolist()
+        # ordered_train_ids = ordered_train_state_for_segment["train_id"].tolist()
+        # ordered_train_positions_in_segment = ordered_train_state_for_segment[
+        #     "train_position"
+        # ].tolist()
         return self._populate_position_map_entries(
-            segment_id, ordered_train_ids, ordered_train_positions_in_segment
+            segment_id, ordered_train_state_for_segment
         )
+
 
     def _populate_position_map_entries(
         self,
         segment_id: int,
-        ordered_train_ids: list[int],
-        ordered_train_positions_in_segment: list[float],
-    ) -> None:
+        ordered_train_state_for_segment: list[dict],
+    ) -> list[dict]:
+        ordered_trains_with_position = []
         trains_in_segment_lookup = {
             t.get_id(): t for t in self.trains_in_segments[segment_id]
         }
-        ordered_train_position_maps_in_segment = []
-        for train_id, position_km in zip(
-            ordered_train_ids, ordered_train_positions_in_segment
-        ):
+        if len(trains_in_segment_lookup ) != len(ordered_train_state_for_segment):
+            raise StateLoadingError(
+                f"Mismatch between rail segment state {ordered_train_state_for_segment}\n\nand known train locations: {trains_in_segment_lookup}"
+            )
+        for train_location in ordered_train_state_for_segment:
+            train_id = train_location["id"]
+            train_position_km = train_location["position_km"]
             train_in_segment = trains_in_segment_lookup.get(train_id, None)
             if train_in_segment is None:
                 raise StateLoadingError(
                     f"Train {train_id} listed in rail segment state but not found in segment"
                 )
-            position_map = {"train": train_in_segment, "position_km": position_km}
-            ordered_train_position_maps_in_segment.append(position_map)
-        return ordered_train_position_maps_in_segment
+            position_map = {
+                "train": train_in_segment,
+                "position_km": train_position_km
+            }
+            ordered_trains_with_position.append(position_map)
+        return ordered_trains_with_position
 
-    def _make_ordered_train_state_for_segment(self, segment_id: int) -> None:
+
+    def _make_ordered_train_state_for_segment(self, segment_id: int) -> list[dict]:
         rail_segment_state = self._load_rail_segment_runtime_state()
         try:
             state_for_segment = rail_segment_state[
@@ -397,12 +385,19 @@ class ComponentLoader:
             ]
         except Exception as e:
             raise StateLoadingError(f"Rail segment missing runtime state: {str(e)}")
-        ordered_train_state_for_segment = state_for_segment.sort_values(
-            by="train_queuing_order", ascending=True
-        )
-        return ordered_train_state_for_segment[
-            ordered_train_state_for_segment["train_id"].notna()
-        ]
+        
+        if state_for_segment.empty:
+            return []
+        
+        latest_state = state_for_segment.sort_values(by="clock_tick").iloc[-1]
+        return latest_state["trains_present"]
+
+        # ordered_train_state_for_segment = state_for_segment.sort_values(
+        #     by="train_queuing_order", ascending=True
+        # )
+        # return ordered_train_state_for_segment[
+        #     ordered_train_state_for_segment["train_id"].notna()
+        # ]
 
     def _load_rail_segment_runtime_state(self) -> pd.DataFrame:
         rail_segment_state_df = self.data_reader.read_rail_segment_runtime_state()
