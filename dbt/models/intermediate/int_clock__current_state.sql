@@ -3,7 +3,7 @@
 with
 latest_clock_tick as (
     select max(clock_tick) as clock_tick from
-    {{ ref('stg_world_clock_state') }}
+        {{ ref('stg_world_clock_state') }}
 )
 
 select
@@ -14,8 +14,8 @@ select
     wcs.hour_of_day,
     wcs.minute
 from
-   {{ ref('stg_world_clock_state') }} wcs
-join
-   latest_clock_tick lct
-on
-  lct.clock_tick = wcs.clock_tick
+    {{ ref('stg_world_clock_state') }} as wcs
+inner join
+    latest_clock_tick as lct
+    on
+        wcs.clock_tick = lct.clock_tick

@@ -8,9 +8,18 @@ with stats as (
     from {{ ref('int_passengers__wait_times') }}
 )
 
--- Unpivot the columns into rows so Altair can consume it instantly
-select 'Max' as metric, max_wait as wait_time from stats
+-- Unpivot the columns into rows so Altair can consume it more easily
+select
+    'Max' as metric,
+    max_wait as wait_time
+from stats
 union all
-select 'Avg' as metric, avg_wait from stats
+select
+    'Avg' as metric,
+    avg_wait
+from stats
 union all
-select 'Min' as metric, min_wait from stats
+select
+    'Min' as metric,
+    min_wait
+from stats

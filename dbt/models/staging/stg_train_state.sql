@@ -7,7 +7,7 @@ with seed_data as (
         cast(station_id as integer) as station_id,
         cast(segment_id as integer) as segment_id,
         stops_seen_so_far,
-        cast(passenger_count AS INTEGER) AS passenger_count
+        cast(passenger_count as integer) as passenger_count
     from {{ ref('train_state') }}
 ),
 
@@ -18,7 +18,7 @@ live_data as (
         cast(station_id as integer) as station_id,
         cast(segment_id as integer) as segment_id,
         stops_seen_so_far,
-        cast(passenger_count AS INTEGER) AS passenger_count
+        cast(passenger_count as integer) as passenger_count
     from {{ source('public_transit', 'runtime_train_state') }}
 ),
 

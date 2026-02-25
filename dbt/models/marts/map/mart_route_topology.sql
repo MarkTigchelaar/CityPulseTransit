@@ -1,6 +1,6 @@
 {{ config(materialized='view') }}
 
-select 
+select
     route_id,
     stop_sequence,
     station_name,

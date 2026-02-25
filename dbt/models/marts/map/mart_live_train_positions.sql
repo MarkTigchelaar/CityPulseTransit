@@ -5,7 +5,9 @@ with positions as (
 ),
 
 utilization as (
-    select train_id, utilization_pct 
+    select
+        train_id,
+        utilization_pct
     from {{ ref('int_trains__recent_utilization') }}
 )
 
@@ -16,6 +18,6 @@ select
     p.passenger_count,
     u.utilization_pct,
     p.distance_from_start_km
-from positions p
-left join utilization u 
+from positions as p
+left join utilization as u
     on p.train_id = u.train_id

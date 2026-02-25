@@ -1,6 +1,6 @@
 {{ config(materialized='view') }}
 
-select 
+select
     station_id,
     station_name,
     total_passengers_in_station,

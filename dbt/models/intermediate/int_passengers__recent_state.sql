@@ -7,8 +7,8 @@ select
     ps.train_id,
     ps.station_id
 from
-    {{ ref('stg_passenger_state') }} ps
-join
-  {{ ref('int_clock__current_state') }} lct
-on
-  ps.clock_tick >= lct.clock_tick - 100
+    {{ ref('stg_passenger_state') }} as ps
+inner join
+    {{ ref('int_clock__current_state') }} as lct
+    on
+        ps.clock_tick >= lct.clock_tick - 100

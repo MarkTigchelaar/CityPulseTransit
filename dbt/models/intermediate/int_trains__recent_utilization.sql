@@ -15,15 +15,15 @@ safe_calculation as (
         t.capacity,
         -- make it some ridiculus number above 100% if null(so it's obvious, but doesn't crash)
         (
-           cast(c.passenger_count as numeric)
-           / nullif(t.capacity, 0)
-         ) * 100.0 as utilization_pct
-    from current_state c
-    left join train_specs t 
+            cast(c.passenger_count as numeric)
+            / nullif(t.capacity, 0)
+        ) * 100.0 as utilization_pct
+    from current_state as c
+    left join train_specs as t
         on c.train_id = t.train_id
 )
 
-select 
+select
     train_id,
     passenger_count,
     capacity,
