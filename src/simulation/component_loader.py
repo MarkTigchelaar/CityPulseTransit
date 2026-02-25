@@ -15,8 +15,12 @@ from simulation.producer import Producer
 from simulation.system_event_bus import SystemEventBus
 
 """
-    There are several exceptions that can be raised in this file.
-    However, they all originate from faulty configuration (system infrastructure seed files),
+    Component Loader
+    Aside from loading the state from the database.
+    This class also does data validation, to avoid painful data corruption issues in the database tables, 
+    and simulation  crashes / hidden state corruption bugs.
+    There are 2 exceptions that can be raised in this file.
+    They both originate from faulty configuration (system infrastructure seed files),
     or from runtime state files.
     No other types of exceptions are explicitly raised, since the code otherwise does not hit exceptions,
     due to it not doing IO of any sort, minus reading in the seedfiles, or reading from the seed tables.
