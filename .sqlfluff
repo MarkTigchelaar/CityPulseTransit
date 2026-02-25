@@ -1,0 +1,28 @@
+[sqlfluff]
+# State the dialect and the templater
+dialect = postgres
+templater = dbt
+max_line_length = 100
+
+# Ignore folders that shouldn't be linted
+exclude_rules = L031, L034
+exclude_patterns = target/**, dbt_packages/**, macros/**
+
+[sqlfluff:templater:dbt]
+# Tell SQLFluff where your dbt project lives
+project_dir = ./dbt
+profiles_dir = ./dbt
+
+[sqlfluff:indentation]
+tab_space_size = 4
+indented_joins = False
+indented_using_on = True
+
+[sqlfluff:rules:capitalisation.keywords]
+capitalisation_policy = lower
+
+[sqlfluff:rules:capitalisation.identifiers]
+capitalisation_policy = lower
+
+[sqlfluff:rules:capitalisation.functions]
+extended_capitalisation_policy = lower
