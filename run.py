@@ -16,7 +16,7 @@ def cleanup(signum=None, frame=None):
         if p.poll() is None:
             try:
                 os.killpg(os.getpgid(p.pid), signal.SIGTERM)
-            except Exception as e:
+            except Exception:
                 pass  # Process might have already died
 
     print("[CLEANUP] System Offline. State is safely parked.")
