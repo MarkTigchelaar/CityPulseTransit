@@ -5,8 +5,6 @@ class TestFourStationHubAndSpokeMap(FourStationHubAndSpokeMap):
     def test_load_and_run_ticks(self):
         self.load_system()
         self.run_once()
-        
-        # Verify Hub has 3 platforms
         hub = self.component_loader.get_stations()[1]
         self.assertEqual(len(hub.platforms), 3, "Hub should have 3 platforms (one per route)")
         

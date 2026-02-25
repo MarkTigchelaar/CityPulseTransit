@@ -1,8 +1,9 @@
 import unittest
 from simulation.component_loader import ComponentLoader
 from mock_data_reader import UnittestDataReader
-from simulation.constants import PlatformState, TravelDays
-from simulation.producer import DummyProducer
+from simulation.platform_state import PlatformState
+from simulation.travel_days import TravelDays
+from dummy_producer import DummyProducer
 
 DEFAULT_CLOCK_TICK = 0
 
@@ -19,9 +20,6 @@ class InitialLoaderState(unittest.TestCase):
             "hour_of_day": 8,
             "minute": 0,
         }
-        self.default_user_adj_variables = [
-            {"clock_tick": self.clock_tick, "clock_rate": 1, "train_speed": 1}
-        ]
 
         self.segment_config = [
             {
@@ -44,14 +42,12 @@ class InitialLoaderState(unittest.TestCase):
                 "clock_tick": self.clock_tick,
                 "segment_id": 99,
                 "train_queuing_order": 0,
-                "train_id": None,
                 "trains_present": [],
             },
             {
                 "clock_tick": self.clock_tick,
                 "segment_id": 100,
                 "train_queuing_order": 0,
-                "train_id": None,
                 "trains_present": [],
             }
         ]
@@ -130,7 +126,6 @@ class InitialLoaderState(unittest.TestCase):
     def _make_component_loader(self) -> ComponentLoader:
         reader = UnittestDataReader(
             world_clock_config=self.default_clock,
-            user_adj_variables=self.default_user_adj_variables,
             rail_segment_config=self.segment_config,
             rail_segment_runtime_state=self.segment_state,
             route_config=self.route_config,

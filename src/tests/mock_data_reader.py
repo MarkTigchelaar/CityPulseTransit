@@ -20,7 +20,6 @@ class UnittestDataReader(DataReader):
         train_runtime_state: List[Dict[str, Any]] = None,
         rail_segment_config: List[Dict[str, Any]] = None,
         route_config: List[Dict[str, Any]] = None,
-        user_adj_variables: List[Dict[str, Any]] = None,
         passenger_itinerary: List[Dict[str, Any]] = None,
         passenger_routes: List[Dict[str, Any]] = None,
         passenger_runtime_state: List[Dict[str, Any]] = None,
@@ -33,7 +32,6 @@ class UnittestDataReader(DataReader):
         self.train_runtime_state = train_runtime_state or []
         self.rail_segment_config = rail_segment_config or []
         self.route_config = route_config or []
-        self.user_adj_variables = user_adj_variables or []
         self.passenger_itinerary = passenger_itinerary or []
         self.passenger_routes = passenger_routes or []
         self.passenger_runtime_state = passenger_runtime_state or []
@@ -60,10 +58,6 @@ class UnittestDataReader(DataReader):
     def read_station_runtime_state(self) -> pd.DataFrame:
         columns = ["clock_tick", "station_id", "route_id", "platform_state"]
         return self._create_dataframe(self.station_runtime_state, columns)
-
-    def read_user_adjustable_variables(self) -> pd.DataFrame:
-        columns = ["clock_tick", "clock_rate", "train_speed"]
-        return self._create_dataframe(self.user_adj_variables, columns)
 
     def read_train_configuration(self) -> pd.DataFrame:
         columns = ["train_id", "route_id", "ordering", "capacity"]

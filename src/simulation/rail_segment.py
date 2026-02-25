@@ -1,14 +1,18 @@
-import json
 from collections import deque
 from simulation.train import Train
 from simulation.world_clock import WorldClock
 from simulation.system_event_bus import SystemEventBus
-from simulation.constants import TRAIN_LIMIT_PER_SEGMENT
+from simulation.platform_state import TRAIN_LIMIT_PER_SEGMENT
 
 
-class TrainWithLocation:
+class _TrainWithLocation:
     def __init__(
-        self, train: int, position_km: float, distance_km: float, segment_id: int, speed: float
+        self,
+        train: int,
+        position_km: float,
+        distance_km: float,
+        segment_id: int,
+        speed: float,
     ):
         self.train = train
         self.position_km = position_km
@@ -21,6 +25,7 @@ class TrainWithLocation:
 
     def move(self):
         self.position_km += self.speed
+        self.position_km = self.get_position()
         if self.position_km > self.distance_km:
             self.position_km = self.distance_km
         self.train.produce_state(station_id=None, segment_id=self.segment_id)
@@ -49,7 +54,7 @@ class RailSegment:
         for position_map in ordered_train_position_maps_in_segment:
             train = position_map["train"]
             position_km = position_map["position_km"]
-            train_w_location = TrainWithLocation(
+            train_w_location = _TrainWithLocation(
                 train, position_km, self.distance_km, self.id, self.speed
             )
             self.trains_in_segment.append(train_w_location)
@@ -110,7 +115,7 @@ class RailSegment:
         return len(self.trains_in_segment) > 0
 
     def train_arrival(self, train: Train, position_km: float = 0.0):
-        train_w_location = TrainWithLocation(
+        train_w_location = _TrainWithLocation(
             train, position_km, self.distance_km, self.id, self.speed
         )
         self.trains_in_segment.append(train_w_location)

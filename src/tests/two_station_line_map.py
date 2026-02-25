@@ -5,7 +5,6 @@ class TwoStationLineMap(InitialRuntimeState):
     def setUp(self):
         super().setUp()
 
-
         self.station_config = [
             {"station_id": 1, "station_name": "Station 1"},
             {"station_id": 2, "station_name": "Station 2"},
@@ -25,4 +24,3 @@ class TwoStationLineMap(InitialRuntimeState):
                 "platform_state": self._default_platform_state(),
             },
         ]
-

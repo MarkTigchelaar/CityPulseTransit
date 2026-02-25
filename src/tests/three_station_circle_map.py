@@ -1,4 +1,3 @@
-
 """
 Three stations connected in a circle A <-> B <-> C <-> A.
 Two routes: One Clockwise, One Counter-Clockwise.
@@ -19,7 +18,6 @@ class ThreeStationCircleMap(InitialRuntimeState):
             {"route_id": 101, "station_id": 2, "stop_sequence": 2},
             {"route_id": 101, "station_id": 3, "stop_sequence": 3},
             {"route_id": 101, "station_id": 1, "stop_sequence": 4},
-            
             # Route 102
             {"route_id": 102, "station_id": 1, "stop_sequence": 1},
             {"route_id": 102, "station_id": 3, "stop_sequence": 2},
@@ -33,9 +31,7 @@ class ThreeStationCircleMap(InitialRuntimeState):
             {"station_id": 3, "station_name": "Station C"},
         ]
 
-        # Each station serves both routes
         self.station_state = [
-            # Station 1
             {
                 "clock_tick": self.clock_tick,
                 "station_id": 1,
@@ -48,7 +44,6 @@ class ThreeStationCircleMap(InitialRuntimeState):
                 "route_id": 102,
                 "platform_state": self._default_platform_state(),
             },
-            # Station 2
             {
                 "clock_tick": self.clock_tick,
                 "station_id": 2,
@@ -61,7 +56,6 @@ class ThreeStationCircleMap(InitialRuntimeState):
                 "route_id": 102,
                 "platform_state": self._default_platform_state(),
             },
-            # Station 3
             {
                 "clock_tick": self.clock_tick,
                 "station_id": 3,
@@ -76,51 +70,47 @@ class ThreeStationCircleMap(InitialRuntimeState):
             },
         ]
 
-        # 6 Segments for bidirectional connectivity
         self.segment_config = [
-            # Pair 1-2
             {
                 "segment_id": 12,
                 "from_station_id": 1,
                 "to_station_id": 2,
                 "distance_km": 10.0,
-                "speed": 1.0
+                "speed": 1.0,
             },
             {
                 "segment_id": 21,
                 "from_station_id": 2,
                 "to_station_id": 1,
                 "distance_km": 10.0,
-                "speed": 1.0
+                "speed": 1.0,
             },
-            # Pair 2-3
             {
                 "segment_id": 23,
                 "from_station_id": 2,
                 "to_station_id": 3,
                 "distance_km": 10.0,
-                "speed": 1.0
+                "speed": 1.0,
             },
             {
                 "segment_id": 32,
                 "from_station_id": 3,
                 "to_station_id": 2,
                 "distance_km": 10.0,
-                "speed": 1.0
+                "speed": 1.0,
             },
-            # Pair 3-1
             {
                 "segment_id": 31,
                 "from_station_id": 3,
                 "to_station_id": 1,
                 "distance_km": 10.0,
-                "speed": 1.0
+                "speed": 1.0,
             },
             {
                 "segment_id": 13,
                 "from_station_id": 1,
                 "to_station_id": 3,
                 "distance_km": 10.0,
-                "speed": 1.0
+                "speed": 1.0,
             },
         ]

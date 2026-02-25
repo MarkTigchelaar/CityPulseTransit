@@ -1,4 +1,4 @@
-from simulation.constants import TravelDays
+from simulation.travel_days import TravelDays
 from simulation.route import Route
 
 

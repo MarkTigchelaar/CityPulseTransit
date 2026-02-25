@@ -1,4 +1,4 @@
-from simulation.constants import TravelDays
+from simulation.travel_days import TravelDays
 from simulation.system_event_bus import SystemEventBus
 
 
@@ -21,12 +21,8 @@ class WorldClock:
         self.minute = minute
         self.system_event_bus = system_event_bus
 
-
     def get_current_clock_tick(self) -> int:
         return self.clock_tick
-
-    def get_clock_rate(self) -> int:
-        return self.clock_rate_adjuster.get_clock_rate()
 
     def tick(self):
         self.clock_tick += 1

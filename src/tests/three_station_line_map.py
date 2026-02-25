@@ -1,7 +1,3 @@
-"""
-Three stations, joined in a line A <-> B <-> C <-> A
-"""
-
 from initial_runtime_state import InitialRuntimeState
 
 
@@ -50,27 +46,27 @@ class ThreeStationLineMap(InitialRuntimeState):
                 "from_station_id": 1,
                 "to_station_id": 2,
                 "distance_km": 10.0,
-                "speed": 1.0
+                "speed": 1.0,
             },
             {
                 "segment_id": 100,
                 "from_station_id": 2,
                 "to_station_id": 1,
                 "distance_km": 10.0,
-                "speed": 1.0
+                "speed": 1.0,
             },
             {
                 "segment_id": 101,
                 "from_station_id": 2,
                 "to_station_id": 3,
                 "distance_km": 10.0,
-                "speed": 1.0
+                "speed": 1.0,
             },
             {
                 "segment_id": 102,
                 "from_station_id": 3,
                 "to_station_id": 2,
                 "distance_km": 10.0,
-                "speed": 1.0
-            }
+                "speed": 1.0,
+            },
         ]

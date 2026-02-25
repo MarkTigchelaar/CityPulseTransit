@@ -9,7 +9,7 @@ from simulation.rail_segment import RailSegment
 from simulation.passenger import Passenger
 from simulation.travel_plan import TravelPlan
 from simulation.world_clock import WorldClock
-from simulation.constants import PlatformState
+from simulation.platform_state import PlatformState
 from simulation.data_reader import DataReader
 from simulation.producer import Producer
 from simulation.system_event_bus import SystemEventBus
@@ -49,21 +49,14 @@ class ComponentLoader:
         flattened_trains_in_segments = list(
             itertools.chain.from_iterable(trains_in_segments)
         )
-        unwrapped_trains = [
-            train_in_segment for train_in_segment in flattened_trains_in_segments
-        ]
-        trains_at_stations = list(
-            itertools.chain.from_iterable(self.trains_at_stations.values())
+        trains_at_stations = self.trains_at_stations.values()
+        flattened_trains_at_stations = list(
+            itertools.chain.from_iterable(trains_at_stations)
         )
-        return list(unwrapped_trains) + trains_at_stations
+        return flattened_trains_in_segments + flattened_trains_at_stations
 
     def get_rail_segments(self) -> list[RailSegment]:
-        incoming_segments = list(
-            itertools.chain.from_iterable(self.incoming_segments.values())
-        )
-        # all incoming segments are also outgoing segments
-        # avoid duplication
-        return incoming_segments
+        return list(itertools.chain.from_iterable(self.incoming_segments.values()))
 
     def get_passengers(self) -> list[Passenger]:
         self.passengers.sort(key=lambda p: p.get_id())
@@ -122,8 +115,6 @@ class ComponentLoader:
             specific_passenger_runtime_state_df = passenger_runtime_state_df[
                 passenger_runtime_state_df["passenger_id"] == passenger_id
             ]
-            # first_row = specific_passenger_runtime_state_df.iloc[0]
-            # self._make_passenger(first_row, travel_plans)
             try:
                 first_row = specific_passenger_runtime_state_df.iloc[0]
                 self._make_passenger(first_row, travel_plans)
@@ -147,13 +138,14 @@ class ComponentLoader:
                 raise ConfigurationError(f"Failed to load travel plans {str(e)}")
         return travel_plans
 
-
     def _load_passenger_runtime_state(self) -> pd.DataFrame:
         passenger_state_df = self.data_reader.read_passenger_runtime_state()
         current_passenger_state_df = passenger_state_df[
             passenger_state_df["clock_tick"] <= self._current_clock_tick()
         ]
-        return current_passenger_state_df.drop_duplicates(subset=["passenger_id"], keep="last")
+        return current_passenger_state_df.drop_duplicates(
+            subset=["passenger_id"], keep="last"
+        )
 
     def _make_passenger(self, row: pd.DataFrame, travel_plans: list[TravelPlan]):
         stops_so_far = row["stops_seen_so_far"]
@@ -166,26 +158,28 @@ class ComponentLoader:
             system_event_bus=self.system_event_bus,
             stops_so_far=stops_so_far,
         )
-
         if pd.notna(train_id):
             self.passengers_in_trains[int(train_id)].append(passenger)
         elif pd.notna(station_id):
             self.passengers_in_stations[int(station_id)].append(passenger)
         if pd.notna(train_id) or pd.notna(station_id):
             passenger.resume_travelling()
-            station_id = passenger.start_travelling()
-            # validate stops seen is correct
-            for recorded_station_id in stops_so_far:
-                if station_id is None:
-                    raise ConfigurationError(
-                        "Configuration for passenger stops is invalid, station id is None"
-                    )
-                if recorded_station_id != station_id:
-                    raise StateLoadingError(
-                        "Station Id does not match expected id for given stop number"
-                    )
-                station_id = passenger.get_next_station_id_on_route(station_id)
+            self._validate_stops_seen(passenger, stops_so_far)
         self.passengers.append(passenger)
+
+
+    def _validate_stops_seen(self, passenger: Passenger, stops_so_far: list[int]):
+        station_id = passenger.start_travelling()
+        for recorded_station_id in stops_so_far:
+            if station_id is None:
+                raise ConfigurationError(
+                    "Configuration for passenger stops is invalid, station id is None"
+                )
+            if recorded_station_id != station_id:
+                raise StateLoadingError(
+                    "Station Id does not match expected id for given stop number"
+                )
+            station_id = passenger.get_next_station_id_on_route(station_id)
 
     def _load_trains(self) -> None:
         train_routes_df = self.data_reader.read_train_route_state()
@@ -200,7 +194,9 @@ class ComponentLoader:
                 ].iloc[0]
             except:
                 raise StateLoadingError("Train is missing runtime state")
-            stops_seen_so_far = [int(station_id) for station_id in current_train_row["stops_seen_so_far"]]
+            stops_seen_so_far = [
+                int(station_id) for station_id in current_train_row["stops_seen_so_far"]
+            ]
             train = self._make_train(line, stops_seen_so_far)
             self._assign_train_to_location(train, current_train_row)
 
@@ -214,14 +210,7 @@ class ComponentLoader:
             route = self.train_routes_lookup[route_id]
         except:
             raise StateLoadingError("Missing route definition")
-        
-        station_ids = route.get_station_ids()
-        if len(stops_seen_so_far) > len(station_ids):
-            raise StateLoadingError("stops seen by train contain more stations than the trains route")
-        for i in range(len(stops_seen_so_far)):
-            if stops_seen_so_far[i] != station_ids[i]:
-                raise StateLoadingError("Mismatch of stations seen against stations on trains route")
-
+        self._validate_train_stops_seen_against_route(stops_seen_so_far, route)
         passengers = self.passengers_in_trains[train_id]
         try:
             return Train(
@@ -236,6 +225,18 @@ class ComponentLoader:
             )
         except:
             raise StateLoadingError("Arguments to Train init are corrupted")
+
+    def _validate_train_stops_seen_against_route(self, stops_seen_so_far: list[int], route: Route) -> None:
+        station_ids = route.get_station_ids()
+        if len(stops_seen_so_far) > len(station_ids):
+            raise StateLoadingError(
+                "stops seen by train contain more stations than the trains route"
+            )
+        for i in range(len(stops_seen_so_far)):
+            if stops_seen_so_far[i] != station_ids[i]:
+                raise StateLoadingError(
+                    "Mismatch of stations seen against stations on trains route"
+                )
 
     def _load_train_state(self) -> pd.DataFrame:
         train_state_df = self.data_reader.read_train_runtime_state()
@@ -327,11 +328,13 @@ class ComponentLoader:
                 system_event_bus=self.system_event_bus,
                 world_clock=self.world_clock,
             )
-            # It should be noted that if all the trains are at the end, or beginning
-            # this could throw the original order off if two or more trains have the same ordering
-            # for their route, and the same distance (2+ trains, different routes).
-            # However, trains from different routes are allowed to show up at various times,
-            # since multiple routes use the same rail segments, so this isn't really an issue.
+            """
+              It should be noted that if all the trains are at the end, or beginning
+              this could throw the original order off if two or more trains have the same ordering
+              for their route, and the same distance (2+ trains, different routes).
+              However, trains from different routes are allowed to show up at various times,
+              since multiple routes use the same rail segments, so this isn't really an issue.
+            """
             self.incoming_segments[to_station_id].append(segment)
             self.outgoing_segments[from_station_id].append(segment)
 
@@ -339,14 +342,9 @@ class ComponentLoader:
         ordered_train_state_for_segment = self._make_ordered_train_state_for_segment(
             segment_id
         )
-        # ordered_train_ids = ordered_train_state_for_segment["train_id"].tolist()
-        # ordered_train_positions_in_segment = ordered_train_state_for_segment[
-        #     "train_position"
-        # ].tolist()
         return self._populate_position_map_entries(
             segment_id, ordered_train_state_for_segment
         )
-
 
     def _populate_position_map_entries(
         self,
@@ -357,7 +355,7 @@ class ComponentLoader:
         trains_in_segment_lookup = {
             t.get_id(): t for t in self.trains_in_segments[segment_id]
         }
-        if len(trains_in_segment_lookup ) != len(ordered_train_state_for_segment):
+        if len(trains_in_segment_lookup) != len(ordered_train_state_for_segment):
             raise StateLoadingError(
                 f"Mismatch between rail segment state {ordered_train_state_for_segment}\n\nand known train locations: {trains_in_segment_lookup}"
             )
@@ -369,13 +367,9 @@ class ComponentLoader:
                 raise StateLoadingError(
                     f"Train {train_id} listed in rail segment state but not found in segment"
                 )
-            position_map = {
-                "train": train_in_segment,
-                "position_km": train_position_km
-            }
+            position_map = {"train": train_in_segment, "position_km": train_position_km}
             ordered_trains_with_position.append(position_map)
         return ordered_trains_with_position
-
 
     def _make_ordered_train_state_for_segment(self, segment_id: int) -> list[dict]:
         rail_segment_state = self._load_rail_segment_runtime_state()
@@ -385,19 +379,12 @@ class ComponentLoader:
             ]
         except Exception as e:
             raise StateLoadingError(f"Rail segment missing runtime state: {str(e)}")
-        
+
         if state_for_segment.empty:
             return []
-        
+
         latest_state = state_for_segment.sort_values(by="clock_tick").iloc[-1]
         return latest_state["trains_present"]
-
-        # ordered_train_state_for_segment = state_for_segment.sort_values(
-        #     by="train_queuing_order", ascending=True
-        # )
-        # return ordered_train_state_for_segment[
-        #     ordered_train_state_for_segment["train_id"].notna()
-        # ]
 
     def _load_rail_segment_runtime_state(self) -> pd.DataFrame:
         rail_segment_state_df = self.data_reader.read_rail_segment_runtime_state()

@@ -52,30 +52,19 @@ class Passenger:
         return self.is_travelling
 
     def resume_travelling(self):
-        """Rehydrates the active route on reboot using the closest past travel plan."""
         travel_day = self.clock.get_day_of_week()
         current_time = (self.clock.get_hour(), self.clock.get_minute())
 
-        # Get all plans for today
         valid_plans = [
             p for p in self.travel_plans if travel_day.value in p.travel_code.value
         ]
-
-        # Sort plans ascending by time
         valid_plans.sort(key=lambda p: (p.start_arrival_hour, p.start_arrival_minute))
-
-        # Iterate backwards to find the highest time <= current time
         for plan in reversed(valid_plans):
             plan_time = (plan.start_arrival_hour, plan.start_arrival_minute)
             if plan_time <= current_time:
                 self.current_route = plan.route
                 self.is_travelling = True
-                # stop_ids = self.current_route.get_station_ids()
-                # for i in range(len(self.station_ids_visited)):
-                #     if self.station_ids_visited[i] != stop_ids[i]:
-                #         raise Exception("Mismatched route and stops seen")
                 return
-
         raise Exception(
             f"Passenger {self.id} could not find a past travel plan to resume."
         )
@@ -111,6 +100,6 @@ class Passenger:
             "clock_tick": self.clock.get_current_clock_tick(),
             "station_id": station_id,
             "train_id": train_id,
-            "stops_seen_so_far": deepcopy(self.station_ids_visited)
+            "stops_seen_so_far": deepcopy(self.station_ids_visited),
         }
         self.system_event_bus.log_passenger_travelling_state(state)

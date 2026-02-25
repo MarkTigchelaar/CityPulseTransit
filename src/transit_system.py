@@ -1,6 +1,6 @@
 from simulation.component_loader import ComponentLoader
 from simulation.table_data_reader import TableDataReader
-from simulation.producer import LiveProducer
+from simulation.live_producer import LiveProducer
 import time
 
 class TransitSystem:
@@ -18,10 +18,11 @@ class TransitSystem:
     def run(self):
         print("Transit system is running.")
         start_tick = self.world_clock.get_current_clock_tick()
-        stop_tick = 21 - start_tick
+        print(f"start tick: {start_tick}")
+        stop_tick = 2000 - start_tick
         print(f"stop tick: {stop_tick}")
         for i in range(stop_tick):
-            print(f"--- ⏱️ Tick {start_tick + i+1} ---")
+            print(f"--- ⏱️ Tick {start_tick + i} ---")
             self.run_once()
             time.sleep(1)
         print("🛑 Debug Run Complete.")

@@ -43,7 +43,7 @@ def chop_latest_clock_tick():
         
         chop_query = """
         DELETE FROM public_transit.runtime_world_clock_state
-        WHERE clock_tick = (SELECT MAX(clock_tick) FROM public_transit.runtime_world_clock_state);
+        WHERE clock_tick >= (SELECT MAX(clock_tick) - 1 FROM public_transit.runtime_world_clock_state);
         """
         cur.execute(chop_query)
         # Fetching how many rows were deleted (should be 1 or 0)

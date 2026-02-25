@@ -16,7 +16,7 @@ station_metrics as (
 )
 
 select
-    t.total_passengers_riding + s.total_passengers_in_stations as total_passengers_in_system,
+    t.total_passengers_riding + s.total_passengers_waiting as total_passengers_in_system,
     t.total_passengers_riding,
     s.total_passengers_waiting,
     round(cast(t.avg_network_utilization_pct as numeric), 1) as avg_network_utilization_pct,

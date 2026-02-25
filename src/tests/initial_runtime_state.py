@@ -1,7 +1,7 @@
 from initial_loader_state import InitialLoaderState
 from simulation.component_loader import ComponentLoader
 from transit_system import TransitSystem
-from simulation.producer import MemoryProducer
+from memory_producer import MemoryProducer
 
 class InitialRuntimeState(InitialLoaderState):
     def setUp(self):
@@ -30,33 +30,11 @@ class InitialRuntimeState(InitialLoaderState):
             raise Exception("Transit system not initialized. Call load_system first.")
         self.transit_system.run_once()
 
-    # def _run_until_passenger_at_station(self, passenger_id, station_id, max_ticks):
-    #     for _ in range(max_ticks):
-    #         self.run_once()
-    #         events = self.producer.get_events("passenger_travelling_state")
-    #         for e in reversed(events):
-    #             if e["passenger_id"] == passenger_id and e["station_id"] == station_id:
-    #                 return
-    #     raise Exception(f"Passenger {passenger_id} did not arrive at Station {station_id} within {max_ticks} ticks")
-
-
     def _run_until_passenger_at_station(self, passenger_id, station_id, max_ticks):
         for _ in range(max_ticks):
             self.run_once()
-            # rail_segment_events = self.producer.get_events("rail_segment_state")
-            # print(rail_segment_events)
             events = self.producer.get_events("passenger_travelling_state")
             for e in reversed(events):
-                # Using .get() defensively and checking for the 'arriving' status
-                if e.get("passenger_id") == passenger_id and e.get("station_id") == station_id:# and e.get("status") == "arriving":
+                if e["passenger_id"] == passenger_id and e["station_id"] == station_id:
                     return
-        
-        # IF WE GET HERE, THE PASSENGER IS STUCK. LET'S DUMP THE FLIGHT RECORDER:
-        print(f"\n\n--- DEBUG: PASSENGER {passenger_id} FLIGHT RECORDER ---")
-        for e in self.producer.get_events("passenger_travelling_state"):
-            if e.get("passenger_id") == passenger_id:
-                history = e.get('stops_seen_so_far', [])
-                print(f"Tick {e.get('clock_tick'):03d} | Station: {e.get('station_id')} | Train: {e.get('train_id')} | History: {history}")
-        print("---------------------------------------------------\n")
-        
-        #raise Exception(f"Passenger {passenger_id} did not arrive at Station {station_id} within {max_ticks} ticks")
+        raise Exception(f"Passenger {passenger_id} did not arrive at Station {station_id} within {max_ticks} ticks")
