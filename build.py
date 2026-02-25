@@ -72,16 +72,10 @@ def check_env():
             venv_python = os.path.join(VENV_DIR, "Scripts", "python.exe")
         else:
             venv_python = os.path.join(VENV_DIR, "bin", "python")
-        
-        print(f"🔄 Re-launching build script inside the virtual environment ({venv_python})...\n")
-        
-        # Re-run this exact script using the venv's Python interpreter
         try:
             subprocess.check_call([venv_python] + sys.argv)
         except subprocess.CalledProcessError as e:
             sys.exit(e.returncode)
-            
-        # Exit the original "outer" system-level Python script cleanly
         sys.exit(0)
 
 
