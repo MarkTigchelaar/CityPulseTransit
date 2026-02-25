@@ -14,7 +14,18 @@ from simulation.data_reader import DataReader
 from simulation.producer import Producer
 from simulation.system_event_bus import SystemEventBus
 
-
+"""
+    There are several exceptions that can be raised in this file.
+    However, they all originate from faulty configuration (system infrastructure seed files),
+    or from runtime state files.
+    No other types of exceptions are explicitly raised, since the code otherwise does not hit exceptions,
+    due to it not doing IO of any sort, minus reading in the seedfiles, or reading from the seed tables.
+    The script only requires validation related exceptions, which should fail (loudly) if incorrect.
+    Underneath are IndexError, KeyError, and one ValueError, all from bad seed files.
+    I elected to leave the exceptions generic, since the issue is in the seed files,
+    which are human readable, the user just needs the error type as it pertains to the
+    seed file issue, a IndexError for example doesnt help with inspecting the seed files.
+"""
 class ConfigurationError(Exception):
     pass
 
@@ -118,7 +129,7 @@ class ComponentLoader:
             try:
                 first_row = specific_passenger_runtime_state_df.iloc[0]
                 self._make_passenger(first_row, travel_plans)
-            except:
+            except Exception:
                 raise StateLoadingError("No matching passenger runtime state")
 
     def _make_travel_plans_for_passenger(
@@ -192,7 +203,7 @@ class ComponentLoader:
                 current_train_row = train_state[
                     train_state["train_id"] == train_id
                 ].iloc[0]
-            except:
+            except Exception:
                 raise StateLoadingError("Train is missing runtime state")
             stops_seen_so_far = [
                 int(station_id) for station_id in current_train_row["stops_seen_so_far"]
@@ -208,7 +219,7 @@ class ComponentLoader:
         # Trains depend on routes to tell stations where they go next
         try:
             route = self.train_routes_lookup[route_id]
-        except:
+        except Exception:
             raise StateLoadingError("Missing route definition")
         self._validate_train_stops_seen_against_route(stops_seen_so_far, route)
         passengers = self.passengers_in_trains[train_id]
@@ -223,7 +234,7 @@ class ComponentLoader:
                 stops_seen_so_far=stops_seen_so_far,
                 system_event_bus=self.system_event_bus,
             )
-        except:
+        except Exception:
             raise StateLoadingError("Arguments to Train init are corrupted")
 
     def _validate_train_stops_seen_against_route(self, stops_seen_so_far: list[int], route: Route) -> None:

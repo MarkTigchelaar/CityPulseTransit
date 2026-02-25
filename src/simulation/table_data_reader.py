@@ -5,12 +5,6 @@ from simulation.data_reader import DataReader
 DB_CONNECTION = "postgresql://thomas:mind_the_gap@localhost:5432/subway_system"
 SCHEMA = "public_transit"
 
-import pandas as pd
-from sqlalchemy import create_engine
-from simulation.data_reader import DataReader
-
-DB_CONNECTION = "postgresql://thomas:mind_the_gap@localhost:5432/subway_system"
-SCHEMA = "public_transit"
 
 class TableDataReader(DataReader):
     def __init__(self):

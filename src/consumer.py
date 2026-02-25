@@ -60,7 +60,7 @@ def consume_and_store():
     consumer = KafkaConsumer(
         *topics,
         bootstrap_servers=["localhost:9092"],
-        group_id=f"transit_group",
+        group_id="transit_group",
         auto_offset_reset="earliest",
         value_deserializer=lambda x: json.loads(x.decode("utf-8")),
     )

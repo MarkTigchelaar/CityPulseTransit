@@ -35,7 +35,7 @@ class Route:
         if most_recent_stop_id not in self.station_ids:
             raise Exception("Station ID not found on this route.")
         if self.station_ids[len(stops_seen_so_far) - 1] != stops_seen_so_far[-1]:
-            raise Exception(f"Station id does not match the one at the matching index")
+            raise Exception("Station id does not match the one at the matching index")
         next_station_index = len(stops_seen_so_far)
         if next_station_index < len(self.station_ids):
             return self.station_ids[next_station_index]
