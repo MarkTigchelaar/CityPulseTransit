@@ -6,12 +6,14 @@ with route_stops as (
         r.stop_sequence,
         r.station_id,
         s.station_name,
+        s.map_x,
+        s.map_y,
         lag(r.station_id) over (
             partition by r.route_id
             order by r.stop_sequence
         ) as previous_station_id
-    from {{ ref('routes') }} as r
-    inner join {{ ref('stations') }} as s
+    from {{ ref('stg_routes') }} as r
+    inner join {{ ref('stg_stations') }} as s
         on r.station_id = s.station_id
 ),
 
@@ -20,6 +22,8 @@ segment_lengths as (
         rs.route_id,
         rs.stop_sequence,
         rs.station_name,
+        rs.map_x,
+        rs.map_y,
         coalesce(seg.distance_km, 0) as segment_km
     from route_stops as rs
     left join {{ ref('rail_segments') }} as seg
@@ -33,6 +37,8 @@ linear_coordinates as (
         route_id,
         stop_sequence,
         station_name,
+        map_x,
+        map_y,
         segment_km,
         sum(segment_km) over (
             partition by route_id
@@ -46,6 +52,8 @@ select
     route_id,
     stop_sequence,
     station_name,
+    map_x,
+    map_y,
     segment_km,
     distance_from_start_km,
     -- Dont collapse all rows down

@@ -6,4 +6,4 @@ select
     station_name,
     segment_km,
     distance_from_start_km
-from {{ ref('int_route__topology') }}
+from {{ ref('int_route_topology') }}

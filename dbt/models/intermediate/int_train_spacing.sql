@@ -5,14 +5,14 @@ with train_positions as (
         train_id,
         route_id,
         distance_from_start_km
-    from {{ ref('int_trains__linear_positions') }}
+    from {{ ref('int_trains_linear_positions') }}
 ),
 
 route_lengths as (
     select
         route_id,
         max(distance_from_start_km) as total_route_km
-    from {{ ref('int_route__topology') }}
+    from {{ ref('int_route_topology') }}
     group by route_id
 ),
 

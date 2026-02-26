@@ -2,7 +2,7 @@ version: 2
 
 sources:
   - name: public_transit
-    schema: "{{ env_var('DBT_SOURCE_SCHEMA', 'public_transit') }}"
+    schema: "{{ env_var('DB_SCHEMA', 'public_transit') }}"
     tables:
       - name: station_passenger_stats
         description: "Raw log of passenger counts and metrics at each station."

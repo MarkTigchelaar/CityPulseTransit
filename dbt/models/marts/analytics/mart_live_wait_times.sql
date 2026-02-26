@@ -5,7 +5,7 @@ with stats as (
         coalesce(max(wait_time_ticks), 0) as max_wait,
         coalesce(min(wait_time_ticks), 0) as min_wait,
         coalesce(round(avg(wait_time_ticks), 1), 0) as avg_wait
-    from {{ ref('int_passengers__wait_times') }}
+    from {{ ref('int_passengers_wait_times') }}
 )
 
 -- Unpivot the columns into rows so Altair can consume it more easily

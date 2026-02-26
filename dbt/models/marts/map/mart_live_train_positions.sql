@@ -1,14 +1,14 @@
 {{ config(materialized='view') }}
 
 with positions as (
-    select * from {{ ref('int_trains__linear_positions') }}
+    select * from {{ ref('int_trains_linear_positions') }}
 ),
 
 utilization as (
     select
         train_id,
         utilization_pct
-    from {{ ref('int_trains__recent_utilization') }}
+    from {{ ref('int_trains_recent_utilization') }}
 )
 
 select

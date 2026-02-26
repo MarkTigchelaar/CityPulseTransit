@@ -10,7 +10,7 @@ recent_train_logs as (
         t.passenger_count,
         row_number() over (partition by t.train_id order by t.clock_tick desc) as row_num
     from {{ ref('stg_train_state') }} as t
-    cross join {{ ref('int_clock__current_state') }} as gc
+    cross join {{ ref('int_clock_current_state') }} as gc
     where t.clock_tick >= gc.clock_tick - 5
 )
 

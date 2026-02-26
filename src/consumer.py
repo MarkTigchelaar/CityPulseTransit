@@ -3,6 +3,7 @@ import time
 from kafka import KafkaConsumer
 from sqlalchemy import create_engine, MetaData, Table
 from sqlalchemy.dialects.postgresql import insert
+from config import DB_CONNECTION, KAFKA_BROKER_PORT, HOST_NAME
 
 
 TOPIC_MAPPING = {
@@ -26,12 +27,8 @@ TABLE_UNIQUE_KEYS = {
 
 # NOTE:
 # Larger batch sizes will avoid a performance issue with hitting the db so often.
-# However, I also want to bend the rules and make the dashboard "realtime"
-# so this was my decision to not let the dashboard hang with "stale" data.
-# I am aware I am mixing streaming, with downstream dbt marts, and a dashboard, but making it "live".
+# However, this enables the dashboard to be have in a "realtime" manner.
 BATCH_SIZE = 1
-
-DB_CONNECTION = "postgresql://thomas:mind_the_gap@localhost:5432/subway_system"
 
 
 def get_db_engine():
@@ -41,12 +38,9 @@ def get_db_engine():
 def consume_and_store():
     topics = list(TOPIC_MAPPING.keys())
     print(f"Connecting to Kafka topics: {topics}...")
-    clean_topic_functions = {key: lambda x: x for key in topics}
-    #clean_topic_functions["rail_segments"] = clean_rail_segments
 
     # NOTE: Data recovery strategy
-    # In a true production environment, we would use a static 'group.id'
-    # (e.g., 'transit_pipeline_prod') so the consumer resumes exactly where
+    # I use a static 'group.id' here so the consumer resumes exactly where
     # it left off after a restart, avoiding unnecessary compute.
     #
     # To execute a historical backfill (Disaster Recovery), we would either:
@@ -59,7 +53,7 @@ def consume_and_store():
     # without duplicating historical records.
     consumer = KafkaConsumer(
         *topics,
-        bootstrap_servers=["localhost:9092"],
+        bootstrap_servers=[HOST_NAME + ":" + KAFKA_BROKER_PORT],
         group_id="transit_group",
         auto_offset_reset="earliest",
         value_deserializer=lambda x: json.loads(x.decode("utf-8")),
@@ -78,7 +72,6 @@ def consume_and_store():
             buffers[topic].append(data)
             if len(buffers[topic]) >= BATCH_SIZE:
                 target_table = TOPIC_MAPPING[topic]
-                buffers[topic] = clean_topic_functions[topic](buffers[topic])
                 insert_batch(engine, buffers[topic], metadata, target_table)
                 buffers[topic] = []
 
@@ -111,17 +104,6 @@ def insert_batch(db_engine, data_list, metadata, table_name):
             upsert_stmt = stmt.on_conflict_do_nothing(index_elements=unique_cols)
 
         conn.execute(upsert_stmt)
-
-
-def clean_rail_segments(data_list):
-    """Parses stringified JSON arrays back into Python lists."""
-    for row in data_list:
-        if "trains_present" in row and isinstance(row["trains_present"], str):
-            try:
-                row["trains_present"] = json.loads(row["trains_present"])
-            except json.JSONDecodeError:
-                pass
-    return data_list
 
 
 if __name__ == "__main__":

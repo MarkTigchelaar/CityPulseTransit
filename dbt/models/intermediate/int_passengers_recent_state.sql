@@ -9,6 +9,6 @@ select
 from
     {{ ref('stg_passenger_state') }} as ps
 inner join
-    {{ ref('int_clock__current_state') }} as lct
+    {{ ref('int_clock_current_state') }} as lct
     on
         ps.clock_tick >= lct.clock_tick - 100

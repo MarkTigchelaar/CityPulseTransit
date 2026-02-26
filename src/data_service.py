@@ -1,12 +1,7 @@
-
-import os
 import pandas as pd
 from sqlalchemy import create_engine
 from streamlit import cache_resource
-
-DB_SCHEMA = os.getenv("DB_SCHEMA", "public_transit")
-DB_CONNECTION = "postgresql://thomas:mind_the_gap@localhost:5432/subway_system"
-
+from config import DB_CONNECTION, DB_SCHEMA
 
 class DataService:
     def __init__(self):
@@ -28,14 +23,34 @@ class DataService:
     def fetch_world_clock(self) -> pd.DataFrame:
         if self.clock_df is not None:
             return self.clock_df
-        query = f"SELECT clock_tick, year, month_name, day_name, day_of_month, hour_of_day, minute FROM {DB_SCHEMA}.mart_world_clock"
+        query = f"""
+            select
+                clock_tick,
+                year,
+                month_name,
+                day_name,
+                day_of_month,
+                hour_of_day,
+                minute
+            from
+                {DB_SCHEMA}.mart_world_clock
+            """
         self.clock_df = pd.read_sql(query, self.engine)
         return self.clock_df
 
     def fetch_kpis(self):
         if self.kpi_df is not None:
             return self.kpi_df
-        query = f"SELECT * FROM {DB_SCHEMA}.mart_live_system_kpis"
+        query = f"""
+            select
+                total_passengers_in_system,
+                total_passengers_riding,
+                total_passengers_waiting,
+                avg_network_utilization_pct,
+                active_trains
+            from
+                {DB_SCHEMA}.mart_live_system_kpis
+            """
         self.kpi_df = pd.read_sql(query, self.engine)
         return self.kpi_df
 
@@ -43,12 +58,15 @@ class DataService:
         if self.station_crowding_df is not None:
             return self.station_crowding_df
         query = f"""
-            SELECT 
+            select 
                 station_name, 
                 total_passengers_in_station,
                 passengers_waiting
-            FROM {DB_SCHEMA}.mart_live_station_crowding
-            ORDER BY total_passengers_in_station DESC
+            from
+                {DB_SCHEMA}.mart_live_station_crowding
+            order by
+                total_passengers_in_station
+            desc
         """
         self.station_crowding_df = pd.read_sql(query, self.engine)
         return self.station_crowding_df
@@ -57,26 +75,31 @@ class DataService:
         if self.fleet_df is not None:
             return self.fleet_df
         query = f"""
-            SELECT 
+            select 
                 train_id, 
                 route_id, 
                 status, 
                 passenger_count, 
                 utilization_pct,
                 distance_from_start_km
-            FROM {DB_SCHEMA}.mart_live_train_positions
-            ORDER BY route_id, train_id
+            from
+                {DB_SCHEMA}.mart_live_train_positions
+            order by
+                route_id, train_id
         """
         self.fleet_df = pd.read_sql(query, self.engine)
         return self.fleet_df
-
 
     def fetch_map_topology(self):
         if self.topology_df is not None:
             return self.topology_df
         query = f"""
             select
-                *
+                route_id,
+                stop_sequence,
+                station_name,
+                segment_km,
+                distance_from_start_km
             from 
                 {DB_SCHEMA}.mart_route_topology
             """
@@ -99,7 +122,6 @@ class DataService:
         self.headway_df = pd.read_sql(query, self.engine)
         return self.headway_df
 
-
     def fetch_static_map(self):
         if self.map_df is not None:
             return self.map_df
@@ -107,6 +129,8 @@ class DataService:
             select
                 route_id,
                 station_name,
+                map_x,
+                map_y,
                 next_station_name
             from
                 {DB_SCHEMA}.mart_system_topology_edges
@@ -126,7 +150,6 @@ class DataService:
             """
         self.wait_time_df = pd.read_sql(query, self.engine)
         return self.wait_time_df
-
 
     def fetch_track_df(self):
         if self.track_df is not None:

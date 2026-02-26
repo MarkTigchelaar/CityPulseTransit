@@ -6,7 +6,7 @@ station_names as (
         station_id,
         station_name
     from
-        {{ ref('stations') }}
+        {{ ref('stg_stations') }}
 ),
 
 recent_passenger_logs as (
@@ -17,8 +17,8 @@ recent_passenger_logs as (
         sps.passengers_entered_station,
         sps.passengers_waiting,
         row_number() over (partition by sps.station_id order by sps.clock_tick desc) as rn
-    from {{ ref('stg_station_passenger__stats') }} as sps
-    inner join {{ ref('int_clock__current_state') }} as icrs
+    from {{ ref('stg_station_passenger_stats') }} as sps
+    inner join {{ ref('int_clock_current_state') }} as icrs
         on sps.clock_tick >= icrs.clock_tick - 5
 )
 
@@ -30,6 +30,6 @@ select
     ps.passengers_entered_station,
     ps.passengers_waiting
 from recent_passenger_logs as ps
-left join {{ ref('stations') }} as sn
+left join {{ ref('stg_stations') }} as sn
     on ps.station_id = sn.station_id
 where ps.rn = 1

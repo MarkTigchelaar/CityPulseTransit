@@ -10,5 +10,5 @@ select
         when gap_to_next_train_km < 0.5 then '🟡 Gapped'
         else '🟢 Optimal'
     end as spacing_health
-from {{ ref('int_train__spacing') }}
+from {{ ref('int_train_spacing') }}
 order by route_id, distance_from_start_km

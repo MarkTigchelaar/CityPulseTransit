@@ -1,7 +1,7 @@
 version: 2
 
 models:
-  - name: int_clock__current_state
+  - name: int_clock_current_state
     description: "The global anchor view. Returns exactly ONE row defining the absolute current time for the system."
     columns:
       - name: clock_tick
@@ -14,7 +14,7 @@ models:
       - name: hour_of_day
       - name: minute
 
-  - name: int_station_passengers__recent_stats
+  - name: int_station_passengers_recent_stats
     description: "Sliding window calculation of station populations, anchored to the current system clock."
     columns:
       - name: station_id
@@ -27,7 +27,7 @@ models:
       - name: passengers_entered_station
       - name: passengers_waiting
 
-  - name: int_route__topology
+  - name: int_route_topology
     description: "Calculates the linear distances and sequences for all stops along defined routes."
     columns:
       - name: route_id
@@ -41,7 +41,7 @@ models:
       - name: distance_from_start_km
       - name: max_system_length_km
 
-  - name: int_passengers__wait_times
+  - name: int_passengers_wait_times
     description: "Calculates the time spent waiting at stations for passengers currently in the sliding window."
     columns:
       - name: passenger_id
@@ -50,7 +50,7 @@ models:
           - not_null
       - name: wait_time_ticks
 
-  - name: int_train__spacing
+  - name: int_train_spacing
     description: "Calculates the physical distance gap between a train and the train immediately ahead of it on the same route."
     columns:
       - name: train_id
@@ -62,7 +62,7 @@ models:
       - name: train_ahead_id
       - name: gap_to_next_train_km
 
-  - name: int_trains__linear_positions
+  - name: int_trains_linear_positions
     description: "Translates train segment positions into absolute linear distances along their assigned routes."
     columns:
       - name: train_id
@@ -74,7 +74,7 @@ models:
       - name: passenger_count
       - name: distance_from_start_km
 
-  - name: int_segments__recent_state
+  - name: int_segments_recent_state
     description: "Unnests the trains_present JSONB array into a flat view of recent train locations on segments."
     columns:
       - name: segment_id
@@ -84,7 +84,7 @@ models:
       - name: train_position
       - name: last_updated_tick
 
-  - name: int_trains__recent_state
+  - name: int_trains_recent_state
     description: "The most recent logged state for each train, including its movement status and stop history."
     columns:
       - name: train_id
@@ -99,7 +99,7 @@ models:
       - name: status
       - name: recent_stop_sequence
 
-  - name: int_trains__recent_utilization
+  - name: int_trains_recent_utilization
     description: "Calculates the current passenger capacity utilization percentage for each train."
     columns:
       - name: train_id
@@ -110,7 +110,7 @@ models:
       - name: capacity
       - name: utilization_pct
 
-  - name: int_passengers__recent_state
+  - name: int_passengers_recent_state
     description: "A rolling history window (100 ticks) of passenger movements."
     columns:
       - name: clock_tick

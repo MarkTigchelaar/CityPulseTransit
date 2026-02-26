@@ -8,8 +8,8 @@ with current_trains as (
         tcs.segment_id,
         tcs.recent_stop_sequence,
         t.route_id
-    from {{ ref('int_trains__recent_state') }} as tcs
-    inner join {{ ref('trains') }} as t
+    from {{ ref('int_trains_recent_state') }} as tcs
+    inner join {{ ref('stg_trains') }} as t
         on tcs.train_id = t.train_id
 ),
 
@@ -22,7 +22,7 @@ train_topology_base as (
         ct.segment_id,
         topo.distance_from_start_km as base_distance_km
     from current_trains as ct
-    inner join {{ ref('int_route__topology') }} as topo
+    inner join {{ ref('int_route_topology') }} as topo
         on
             ct.route_id = topo.route_id
             and ct.recent_stop_sequence = topo.stop_sequence
@@ -33,7 +33,7 @@ train_offsets as (
         segment_id,
         train_id,
         train_position
-    from {{ ref('int_segments__recent_state') }}
+    from {{ ref('int_segments_recent_state') }}
     where train_id is not null
 )
 

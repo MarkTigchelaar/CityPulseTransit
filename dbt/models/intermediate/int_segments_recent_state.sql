@@ -8,7 +8,7 @@ recent_segment_logs as (
         rss.clock_tick,
         row_number() over (partition by rss.segment_id order by rss.clock_tick desc) as rn
     from {{ ref('stg_rail_segment_state') }} as rss
-    cross join {{ ref('int_clock__current_state') }} as gc
+    cross join {{ ref('int_clock_current_state') }} as gc
     where rss.clock_tick >= gc.clock_tick - 5
 ),
 

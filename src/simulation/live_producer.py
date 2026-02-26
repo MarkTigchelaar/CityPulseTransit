@@ -2,11 +2,13 @@ import json
 from typing import Any
 from kafka import KafkaProducer
 from simulation.producer import Producer
+from config import KAFKA_BROKER_PORT, HOST_NAME
+
 
 class LiveProducer(Producer):
     def __init__(self):
         self.producer = KafkaProducer(
-            bootstrap_servers=["localhost:9092"],
+            bootstrap_servers=[HOST_NAME + ":" + KAFKA_BROKER_PORT],
             value_serializer=lambda x: json.dumps(x).encode("utf-8"),
         )
 

@@ -10,7 +10,7 @@ base_clock as (
         wcs.minute,
         make_date(wcs.year, 1, 1) + (wcs.day_of_year - 1) * interval '1 day' as actual_date
     from {{ ref('stg_world_clock_state') }} as wcs
-    inner join {{ ref('int_clock__current_state') }} as lct
+    inner join {{ ref('int_clock_current_state') }} as lct
         on wcs.clock_tick = lct.clock_tick
 )
 

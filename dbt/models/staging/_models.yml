@@ -1,7 +1,86 @@
 version: 2
 
 models:
-  - name: stg_station_passenger__stats
+  # --- STATIC SEED DATA ---
+  - name: stg_stations
+    description: "Static configuration of transit stations including map coordinates."
+    columns:
+      - name: station_id
+        tests:
+          - unique
+          - not_null
+      - name: station_name
+      - name: map_x
+      - name: map_y
+
+  - name: stg_routes
+    description: "Static configuration mapping the sequence of stops for each route."
+    columns:
+      - name: route_id
+        tests:
+          - not_null
+      - name: stop_sequence
+        tests:
+          - not_null
+      - name: station_id
+
+  - name: stg_trains
+    description: "Static configuration of the train fleet and capacities."
+    columns:
+      - name: train_id
+        tests:
+          - unique
+          - not_null
+      - name: route_id
+      - name: ordering
+      - name: capacity
+
+  - name: stg_rail_segments
+    description: "Static configuration of physical track segments connecting stations."
+    columns:
+      - name: segment_id
+        tests:
+          - unique
+          - not_null
+      - name: from_station_id
+      - name: to_station_id
+      - name: distance_km
+      - name: speed
+
+  - name: stg_passenger_routes
+    description: "Static configuration of passenger travel routes."
+    columns:
+      - name: route_id
+        tests:
+          - not_null
+      - name: stop_sequence
+      - name: station_id
+
+  - name: stg_passenger_itinerary
+    description: "Static schedules defining when and how passengers travel."
+    columns:
+      - name: id
+        tests:
+          - not_null
+      - name: passenger_route_id
+      - name: start_arrival_hour
+      - name: arrival_minute
+      - name: travel_code
+
+  # --- DYNAMIC RUNTIME DATA ---
+  - name: stg_world_clock_state
+    description: "The raw heartbeat and time tracking of the simulation."
+    columns:
+      - name: clock_tick
+        tests:
+          - not_null
+      - name: year
+      - name: day_of_year
+      - name: day_of_week
+      - name: hour_of_day
+      - name: minute
+
+  - name: stg_station_passenger_stats
     description: "Raw log of passenger counts and metrics at each station."
     columns:
       - name: station_id
@@ -14,18 +93,6 @@ models:
       - name: passengers_boarded_trains
       - name: passengers_entered_station
       - name: passengers_waiting
-
-  - name: stg_world_clock_state
-    description: "The raw heartbeat and time tracking of the simulation."
-    columns:
-      - name: clock_tick
-        tests:
-          - not_null
-      - name: year
-      - name: day_of_year
-      - name: day_of_week
-      - name: hour_of_day
-      - name: minute
 
   - name: stg_passenger_state
     description: "Raw log of passenger travel events combining seed and live data."
@@ -68,6 +135,6 @@ models:
           - not_null
       - name: station_id
       - name: segment_id
+      - name: passenger_count
       - name: stops_seen_so_far
         description: "Array of integer station IDs representing the train's route history."
-      - name: passenger_count

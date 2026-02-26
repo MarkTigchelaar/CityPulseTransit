@@ -8,13 +8,21 @@ VENV_DIR = ".venv"
 
 
 # This is a local project,
-# so the security concerns of a production
-# project are not relevant here.
+# so the security concerns of passwords and secrets
+# dont actually apply here.
+# .env file generated in this script on first run.
+# Having a .env file loaded to github, or just in general might
+# give the wrong impression, or attact bots
 ENV_DEFAULTS = {
     "POSTGRES_USER": "thomas",
     "POSTGRES_PASSWORD": "mind_the_gap",
     "POSTGRES_DB": "subway_system",
-    "DBT_SOURCE_SCHEMA": "public_transit",
+    "DB_SCHEMA": "public_transit",
+    "POSTGRES_PORT": "5432",
+    "HOST_NAME": "localhost",
+    "KAFKA_BROKER_PORT": "9092",
+    "DB_CONNECTION": "postgresql://thomas:mind_the_gap@localhost:5432/subway_system",
+
 }
 
 
@@ -99,20 +107,15 @@ def run_dbt_command(command, desc):
         os.chdir(original_dir)
 
 
-# during development, I found that some consumers can be zombified when pressing CTRL + C
-# This lead to duplication in the Kafka landing tables,
-# and about 45 min of wasted time.
-# I'm probably going to leave this in, since this is a "nuke everything" script.
-# However, just to note, the run script does gracefully tell the processes to quit,
-# So this is a fallback, guarantee if all else fails, despite that being a remote possibilty
+
+# Fallback, guarantee if all else fails, everything gets nuked
 def eradicate_zombies():
     try:
-        # The -f flag tells pkill to match the full command line (e.g., 'python consumer.py')
         subprocess.run(["pkill", "-f", "consumer.py"], stderr=subprocess.DEVNULL)
         subprocess.run(["pkill", "-f", "run.py"], stderr=subprocess.DEVNULL)
         print("Process table sanitized.")
     except Exception as e:
-        print(f"Zombie sweep failed (usually fine on Windows/Mac): {e}")
+        print(f"Zombie sweep failed: {e}")
 
 
 def main():

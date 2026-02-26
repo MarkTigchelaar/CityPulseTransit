@@ -4,8 +4,14 @@ import time
 import signal
 import os
 import psycopg2
-from dotenv import load_dotenv
-
+from src.config import (
+    POSTGRES_DB,
+    POSTGRES_USER,
+    POSTGRES_PASSWORD,
+    HOST_NAME,
+    POSTGRES_PORT,
+    DB_SCHEMA
+)
 
 processes = []
 
@@ -24,28 +30,28 @@ def cleanup(signum=None, frame=None):
 
 
 def trim_latest_clock_tick():
-    load_dotenv()
+
     print("Trimming the latest clock tick to force a safe replay...")
     try:
         conn = psycopg2.connect(
-            dbname=os.getenv("POSTGRES_DB", "subway_system"),
-            user=os.getenv("POSTGRES_USER", "thomas"),
-            password=os.getenv("POSTGRES_PASSWORD", "mind_the_gap"),
-            host="localhost",
-            port="5432",
+            dbname=POSTGRES_DB,
+            user=POSTGRES_USER,
+            password=POSTGRES_PASSWORD,
+            host=HOST_NAME,
+            port=POSTGRES_PORT,
         )
         cur = conn.cursor()
 
-        trimming_query = """
+        trimming_query = f"""
             DELETE
             FROM
-                public_transit.runtime_world_clock_state
+                {DB_SCHEMA}.runtime_world_clock_state
             WHERE
                 clock_tick >= (
                 SELECT 
                     MAX(clock_tick) - 1
                 FROM
-                    public_transit.runtime_world_clock_state
+                    {DB_SCHEMA}.runtime_world_clock_state
             );
         """
         cur.execute(trimming_query)
@@ -61,7 +67,7 @@ def trim_latest_clock_tick():
             print("Clock table is empty.")
 
     except Exception as e:
-        print(f"Could not chop clock tick (first run?): {e}")
+        print(f"Could not trim clock tick (first run?): {e}")
 
 
 def main():
@@ -70,6 +76,7 @@ def main():
     signal.signal(signal.SIGTERM, cleanup)
 
     print("🚂 CityPulse Transit System Initializing...")
+    trim_latest_clock_tick()
 
     print("-> Starting Kafka Consumer...")
     p_consumer = subprocess.Popen(
@@ -80,7 +87,7 @@ def main():
     )
     processes.append(p_consumer)
     time.sleep(3)
-    trim_latest_clock_tick()
+    
 
     print("-> Starting Train Simulation...")
     p_producer = subprocess.Popen(

@@ -17,18 +17,18 @@ from simulation.system_event_bus import SystemEventBus
 """
     Component Loader
     Aside from loading the state from the database.
-    This class also does data validation, to avoid painful data corruption issues in the database tables, 
-    and simulation  crashes / hidden state corruption bugs.
+    This class also does data validation, to avoid painful data corruption issues that could crash the simulation, or
+    break the dashboard.
     There are 2 exceptions that can be raised in this file.
     They both originate from faulty configuration (system infrastructure seed files),
     or from runtime state files.
     No other types of exceptions are explicitly raised, since the code otherwise does not hit exceptions,
-    due to it not doing IO of any sort, minus reading in the seedfiles, or reading from the seed tables.
-    The script only requires validation related exceptions, which should fail (loudly) if incorrect.
-    Underneath are IndexError, KeyError, and one ValueError, all from bad seed files.
-    I elected to leave the exceptions generic, since the issue is in the seed files,
+    due to the ComponentLoader not doing IO of any sort, as that is the job of the DataReader type.
+    The script only requires validation related exceptions, which should fail (loudly) if triggered.
+    Underneath these exceptions are IndexError, KeyError, and one ValueError, all from bad seed files.
+    I elected to leave the exceptions generic, since the issue is ALWAYS in the seed files,
     which are human readable, the user just needs the error type as it pertains to the
-    seed file issue, a IndexError for example doesnt help with inspecting the seed files.
+    seed file issue, an IndexError for example doesnt help with inspecting of said files.
 """
 class ConfigurationError(Exception):
     pass

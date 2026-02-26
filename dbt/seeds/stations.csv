@@ -1,4 +1,4 @@
-station_id,station_name
-1,Central Station
-2,Northgate
-3,South Commons
+station_id,station_name,map_x,map_y
+1,Central Station,100,200
+2,Northgate,350,200
+3,South Commons,600,200

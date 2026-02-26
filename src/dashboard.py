@@ -336,7 +336,7 @@ class TransitDashboard:
             return
 
         # Orchestrate the helpers
-        station_coords = self._get_station_coordinates()
+        station_coords = self._get_station_coordinates(map_df)
         route_colors = self._generate_route_colors(map_df["route_id"].unique())
         svg_content = self._build_svg_network(map_df, station_coords, route_colors)
 
@@ -345,13 +345,13 @@ class TransitDashboard:
             unsafe_allow_html=True,
         )
 
-    def _get_station_coordinates(self) -> dict:
-        """Isolated geometry to easily swap with a database query later."""
-        return {
-            "Central Station": {"x": 100, "y": 200},
-            "Northgate": {"x": 350, "y": 200},
-            "South Commons": {"x": 600, "y": 200},
-        }
+    def _get_station_coordinates(self, map_df: pd.DataFrame) -> dict:
+        coords_df = map_df[["station_name", "map_x", "map_y"]].drop_duplicates()
+        return (
+            coords_df.set_index("station_name")
+            .rename(columns={"map_x": "x", "map_y": "y"})
+            .to_dict(orient="index")
+        )
 
     def _generate_route_colors(self, routes) -> dict:
         """Generates a stable, visually distinct color palette for routes."""

@@ -6,7 +6,7 @@ with passenger_status as (
         clock_tick,
         station_id,
         train_id
-    from {{ ref('int_passengers__recent_state') }}
+    from {{ ref('int_passengers_recent_state') }}
 ),
 
 latest_status as (

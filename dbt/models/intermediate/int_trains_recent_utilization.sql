@@ -1,11 +1,11 @@
 {{ config(materialized='view') }}
 
 with current_state as (
-    select * from {{ ref('int_trains__recent_state') }}
+    select * from {{ ref('int_trains_recent_state') }}
 ),
 
 train_specs as (
-    select * from {{ ref('trains') }}
+    select * from {{ ref('stg_trains') }}
 ),
 
 safe_calculation as (
