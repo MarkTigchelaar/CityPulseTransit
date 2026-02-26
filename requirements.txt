@@ -7,3 +7,4 @@ streamlit==1.43.0
 streamlit-autorefresh==1.0.1
 altair==5.3.0
 pytest==9.0.2
+python-dotenv==1.0.1
