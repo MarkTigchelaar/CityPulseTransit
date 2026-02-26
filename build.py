@@ -6,13 +6,6 @@ import time
 
 VENV_DIR = ".venv"
 
-
-# This is a local project,
-# so the security concerns of passwords and secrets
-# dont actually apply here.
-# .env file generated in this script on first run.
-# Having a .env file loaded to github, or just in general might
-# give the wrong impression, or attact bots
 ENV_DEFAULTS = {
     "POSTGRES_USER": "thomas",
     "POSTGRES_PASSWORD": "mind_the_gap",
@@ -22,7 +15,6 @@ ENV_DEFAULTS = {
     "HOST_NAME": "localhost",
     "KAFKA_BROKER_PORT": "9092",
     "DB_CONNECTION": "postgresql://thomas:mind_the_gap@localhost:5432/subway_system",
-
 }
 
 
@@ -71,8 +63,6 @@ def is_running_outside_virtual_environment() -> bool:
 
 
 def check_env():
-    # Enables one shot build, despite not having the venv up yet.
-    # Catches first run edge case.
     if is_running_outside_virtual_environment():
         print("Script is running outside venv.")
         create_venv()
@@ -84,6 +74,7 @@ def check_env():
             subprocess.check_call([venv_python] + sys.argv)
         except subprocess.CalledProcessError as e:
             sys.exit(e.returncode)
+        # Exit the parent process once the child finishes
         sys.exit(0)
 
 
@@ -96,7 +87,15 @@ def run_dbt_command(command, desc):
         dbt_dir = "."
     try:
         os.chdir(dbt_dir)
-        subprocess.check_call(command, shell=True)
+
+        custom_env = os.environ.copy()
+        custom_env["PYTHONWARNINGS"] = "ignore"
+
+        # Inject the venv's bin/Scripts folder into the PATH
+        venv_bin = os.path.dirname(sys.executable)
+        custom_env["PATH"] = f"{venv_bin}{os.pathsep}{custom_env.get('PATH', '')}"
+
+        subprocess.check_call(command, shell=True, env=custom_env)
         print(f"{desc} Complete!\n")
 
     except subprocess.CalledProcessError as e:
@@ -107,8 +106,6 @@ def run_dbt_command(command, desc):
         os.chdir(original_dir)
 
 
-
-# Fallback, guarantee if all else fails, everything gets nuked
 def eradicate_zombies():
     try:
         subprocess.run(["pkill", "-f", "consumer.py"], stderr=subprocess.DEVNULL)
@@ -116,6 +113,21 @@ def eradicate_zombies():
         print("Process table sanitized.")
     except Exception as e:
         print(f"Zombie sweep failed: {e}")
+
+
+def print_activation_instructions():
+    print("BUILD COMPLETE: System is ready to run")
+    print("\nTo start the simulation, you must first activate the virtual environment.")
+
+    if sys.platform == "win32":
+        print("Copy and paste this command into your terminal:")
+        print("  .venv\\Scripts\\activate")
+    else:
+        print("Copy and paste this command into your terminal:")
+        print("  source .venv/bin/activate")
+
+    print("\nThen run:")
+    print("  python run.py\n")
 
 
 def main():
@@ -127,10 +139,7 @@ def main():
         f"{sys.executable} -m pip install -r requirements.txt",
         "Installing Python dependencies",
     )
-    run_command(
-        f"{sys.executable} -m pytest src/",
-        "Running data generator tests"
-    )
+    run_command(f"{sys.executable} -m pytest src/", "Running data generator tests")
     run_command(
         "docker compose down -v",
         "Shutting off containers, if present...",
@@ -143,10 +152,11 @@ def main():
     for i in range(3, 0, -1):
         print(i)
         time.sleep(1)
-    print("Attempting to build back end with dbt...")
+
     run_dbt_command("dbt build", "Seeding, Building, and Testing dbt models")
     run_dbt_command("dbt docs generate", "Generating dbt documentation artifacts")
-    print("\nBuild Complete")
+
+    print_activation_instructions()
 
 
 if __name__ == "__main__":
