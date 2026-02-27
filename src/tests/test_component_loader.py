@@ -1,8 +1,8 @@
 import unittest
-from simulation.platform_state import PlatformState
-from simulation.travel_days import TravelDays
-from simulation.component_loader import StateLoadingError, ConfigurationError
-from initial_loader_state import InitialLoaderState
+from src.simulation.domain.platform_state import PlatformState
+from src.simulation.domain.travel_days import TravelDays
+from src.simulation.bootstrap.component_loader import StateLoadingError, ConfigurationError
+from initial_states.initial_loader_state import InitialLoaderState
 
 
 class TestComponentLoader(InitialLoaderState):
@@ -27,8 +27,8 @@ class TestComponentLoader(InitialLoaderState):
         loader.load_system_components()
 
         trains = loader.get_trains()
-        target_train = next(t for t in trains if t.id == 1)
-        other_trains = [t for t in trains if t.id != 1]
+        target_train = next(t for t in trains if t.get_id() == 1)
+        other_trains = [t for t in trains if t.get_id() != 1]
 
         self.assertIn(
             1, target_train.passengers, "Passenger 1 should be inside Train 1"
@@ -42,13 +42,13 @@ class TestComponentLoader(InitialLoaderState):
         self.assertTrue(
             passenger.is_travelling, "Passenger should be marked as travelling"
         )
-        self.assertEqual(passenger.station_ids_visited, [1])
+        self.assertEqual(passenger.visited_station_ids, [1])
 
         stations = loader.get_stations()
         for station_id in stations:
             target_station = stations[station_id]
 
-            passenger_ids_in_station = [p.id for p in target_station.passengers]
+            passenger_ids_in_station = [p.get_id() for p in target_station.passengers]
             self.assertNotIn(
                 1,
                 passenger_ids_in_station,
@@ -70,7 +70,7 @@ class TestComponentLoader(InitialLoaderState):
         stations = loader.get_stations()
         target_station = stations[1]
 
-        passenger_ids_in_station = [p.id for p in target_station.passengers]
+        passenger_ids_in_station = [p.get_id() for p in target_station.passengers]
         self.assertIn(
             1, passenger_ids_in_station, "Passenger 1 should be inside Station 1"
         )
@@ -147,8 +147,8 @@ class TestComponentLoader(InitialLoaderState):
         loader.load_system_components()
 
         trains = loader.get_trains()
-        t1 = next(t for t in trains if t.id == 1)
-        t2 = next(t for t in trains if t.id == 2)
+        t1 = next(t for t in trains if t.get_id() == 1)
+        t2 = next(t for t in trains if t.get_id() == 2)
         # very important this loads correctly.
         # routes are compared to this, and when equal that is
         # the completion of the route. Passegners get off trains and leave
@@ -317,7 +317,7 @@ class TestComponentLoader(InitialLoaderState):
         segments = loader.get_rail_segments()
         segment = segments[0]
 
-        self.assertEqual(segment.id, 99)
+        self.assertEqual(segment.get_id(), 99)
         self.assertTrue(segment.has_trains())
 
         self.assertIn(99, loader.trains_in_segments)

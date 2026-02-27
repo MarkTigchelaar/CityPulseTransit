@@ -1,5 +1,5 @@
-from two_station_line_map import TwoStationLineMap
-from simulation.platform_state import PlatformState
+from system_maps.two_station_line_map import TwoStationLineMap
+from src.simulation.domain.platform_state import PlatformState
 import unittest
 
 

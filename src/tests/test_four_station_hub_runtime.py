@@ -1,5 +1,5 @@
-from four_station_hub_and_spoke_map import FourStationHubAndSpokeMap
-from simulation.platform_state import PlatformState
+from system_maps.four_station_hub_and_spoke_map import FourStationHubAndSpokeMap
+from src.simulation.domain.platform_state import PlatformState
 import unittest
 
 

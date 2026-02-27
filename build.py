@@ -89,7 +89,7 @@ def run_dbt_command(command, desc):
         os.chdir(dbt_dir)
 
         custom_env = os.environ.copy()
-        custom_env["PYTHONWARNINGS"] = "ignore"
+        #custom_env["PYTHONWARNINGS"] = "ignore"
 
         # Inject the venv's bin/Scripts folder into the PATH
         venv_bin = os.path.dirname(sys.executable)

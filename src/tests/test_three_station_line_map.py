@@ -1,4 +1,4 @@
-from three_station_line_map import ThreeStationLineMap
+from system_maps.three_station_line_map import ThreeStationLineMap
 import unittest
 
 

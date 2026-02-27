@@ -28,10 +28,12 @@ def cleanup(signum=None, frame=None):
     print("[CLEANUP] System Offline. State is safely parked.")
     sys.exit(0)
 
-
-def trim_latest_clock_tick():
-
-    print("Trimming the latest clock tick to force a safe replay...")
+# A clock tick in the simulation can be inturrupted
+# before all components update the db.
+# This is data corruption
+# Trimming off the state of the last 2 clock ticks eliminates
+# the potential of this occuring.
+def trim_latest_clock_ticks():
     try:
         conn = psycopg2.connect(
             dbname=POSTGRES_DB,
@@ -76,11 +78,11 @@ def main():
     signal.signal(signal.SIGTERM, cleanup)
 
     print("🚂 CityPulse Transit System Initializing...")
-    trim_latest_clock_tick()
+    trim_latest_clock_ticks()
 
     print("-> Starting Kafka Consumer...")
     p_consumer = subprocess.Popen(
-        [sys.executable, "src/consumer.py"],
+        [sys.executable, "-m", "src.streaming.consumer"],
         cwd=os.getcwd(),
         # Creates a strict process group boundary
         preexec_fn=os.setsid,
@@ -91,13 +93,13 @@ def main():
 
     print("-> Starting Train Simulation...")
     p_producer = subprocess.Popen(
-        [sys.executable, "src/transit_system.py"], cwd=os.getcwd(), preexec_fn=os.setsid
+        [sys.executable, "-m", "src.simulation.transit_system"], cwd=os.getcwd(), preexec_fn=os.setsid
     )
     processes.append(p_producer)
 
     print("-> Launching Dashboard...")
     p_dashboard = subprocess.Popen(
-        ["streamlit", "run", "src/dashboard.py", "--server.headless=true"],
+        [sys.executable, "-m", "streamlit", "run", "src/dashboard/dashboard.py", "--server.headless=true"],
         cwd=os.getcwd(),
         preexec_fn=os.setsid,
         stdout=subprocess.DEVNULL,

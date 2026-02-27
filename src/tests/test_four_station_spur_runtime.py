@@ -1,5 +1,5 @@
-from four_station_spur_map import FourStationSpurMap
-from simulation.platform_state import PlatformState
+from system_maps.four_station_spur_map import FourStationSpurMap
+from src.simulation.domain.platform_state import PlatformState
 import unittest
 
 

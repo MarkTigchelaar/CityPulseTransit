@@ -1,4 +1,4 @@
-from four_station_spur_map import FourStationSpurMap
+from system_maps.four_station_spur_map import FourStationSpurMap
 import unittest
 
 class TestFourStationSpurMap(FourStationSpurMap):

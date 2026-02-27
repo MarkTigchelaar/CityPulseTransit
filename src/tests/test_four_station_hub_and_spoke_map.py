@@ -1,4 +1,4 @@
-from four_station_hub_and_spoke_map import FourStationHubAndSpokeMap
+from system_maps.four_station_hub_and_spoke_map import FourStationHubAndSpokeMap
 import unittest
 
 class TestFourStationHubAndSpokeMap(FourStationHubAndSpokeMap):

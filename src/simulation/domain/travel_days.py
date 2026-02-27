@@ -1,0 +1,49 @@
+from enum import Enum
+
+
+class TravelDays(Enum):
+    Monday = 'M'
+    Tuesday = 'T'
+    Wednesday = 'W'
+    Thursday = 'R'
+    Friday = 'F'
+    Saturday = 'S'
+    Sunday = 'U'
+
+    MonWedFri = 'MWF'
+    TueThur = 'TR'
+    WorkWeek = 'MTWRF'
+    Weekend = 'SU'
+    Daily = 'MTWRFSU'
+
+    def __eq__(self, other) -> bool:
+        if isinstance(other, TravelDays):
+            return self.value == other.value
+        return self.value == other
+
+    def __hash__(self) -> int:
+        return hash(self.value)
+
+    @staticmethod
+    def from_code(code: str) -> 'TravelDays':
+        for member in TravelDays:
+            if member.value == code:
+                return member
+        raise ValueError(f"No travel code with value {code}")
+
+    @staticmethod
+    def next_day(current_day: 'TravelDays') -> 'TravelDays':
+        day_sequence = {
+            TravelDays.Monday: TravelDays.Tuesday,
+            TravelDays.Tuesday: TravelDays.Wednesday,
+            TravelDays.Wednesday: TravelDays.Thursday,
+            TravelDays.Thursday: TravelDays.Friday,
+            TravelDays.Friday: TravelDays.Saturday,
+            TravelDays.Saturday: TravelDays.Sunday,
+            TravelDays.Sunday: TravelDays.Monday
+        }
+
+        if current_day in day_sequence:
+            return day_sequence[current_day]
+        
+        raise ValueError(f"Cannot determine 'next day' for a schedule group: {current_day.name}")

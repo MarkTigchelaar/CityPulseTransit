@@ -1,4 +1,4 @@
-from three_station_circle_map import ThreeStationCircleMap
+from system_maps.three_station_circle_map import ThreeStationCircleMap
 import unittest
 
 

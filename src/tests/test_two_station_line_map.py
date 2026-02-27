@@ -1,5 +1,5 @@
 import unittest
-from two_station_line_map import TwoStationLineMap
+from system_maps.two_station_line_map import TwoStationLineMap
 
 
 class TestTwoStationLineMap(TwoStationLineMap):
