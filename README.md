@@ -19,7 +19,7 @@ This project was built to demonstrate data engineering design patterns, specific
 ## Key Engineering Goals Achieved
 
 ### 1. Single-Command CI/CD Emulator (`build.py`)
-To ensure ease of use, this project is built by running a single script. Executing python build.py isolates the environment, installs dependencies, executes a pytest suite, provisions Docker containers, and runs dbt build to mimic a clean CI/CD deployment pipeline.
+To ensure ease of use, this project is built by running a single script. Executing the python build script isolates the environment, installs dependencies, executes a pytest suite, provisions Docker containers, and runs dbt build, mimicking a clean CI/CD deployment pipeline.
 
 ### 2. Idempotent Disaster Recovery
 If the analytical layer crashes, the data consumer can safely replay the entire Kafka retention window with minimal changes. By default, the simulation recovers gracefully from system pauses and continues with zero data corruption. Users are welcome to test this behavior and verify the database state.
@@ -46,6 +46,7 @@ This project is designed to run on any local machine with Docker and Python 3.10
 ### 1. Clone the repository
 ```
 git clone (https://github.com/MarkTigchelaar/CityPulseTransit.git)
+
 cd CityPulseTransit
 ```
 ### 2. Run build script
