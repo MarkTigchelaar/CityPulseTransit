@@ -104,7 +104,7 @@ class TransitDashboard:
             self.render_wait_times()
 
     def render_live_map(self):
-        st.subheader("📍 Live Fleet Movement")
+        st.subheader("Live Fleet Movement")
 
         fleet_df = self.data_service.fetch_fleet_status()
         topology_df = self.data_service.fetch_map_topology()
