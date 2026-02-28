@@ -1,6 +1,5 @@
 #version: '3.8'
 services:
-  # --- BROKER & COORDINATOR ---
   zookeeper:
     image: confluentinc/cp-zookeeper:7.5.0
     hostname: zookeeper
@@ -28,11 +27,9 @@ services:
       KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR: 1
       KAFKA_GROUP_INITIAL_REBALANCE_DELAY_MS: 0
 
-  # --- DATA WAREHOUSE (Postgres) ---
   postgres:
     image: postgres:15
     container_name: warehouse
-    # Reads variables from your .env file automatically
     environment:
       POSTGRES_USER: ${POSTGRES_USER}
       POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
@@ -42,7 +39,6 @@ services:
     volumes:
       - postgres_data:/var/lib/postgresql/data
 
-  # --- UI (Optional but good for sanity checks) ---
   kafka-ui:
     image: provectuslabs/kafka-ui:latest
     container_name: kafka-ui
