@@ -91,7 +91,7 @@ class TransitDashboard:
                 "Fleet Matrix",
                 "System Map",
                 "Crowd Meter",
-                "Train bunching",
+                "Train Bunching",
                 "Service Quality",
             ]
         )
