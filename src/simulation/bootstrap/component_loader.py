@@ -178,7 +178,12 @@ class ComponentLoader:
             self.passengers_in_stations[int(station_id)].append(passenger)
         if pd.notna(train_id) or pd.notna(station_id):
             passenger.resume_travelling()
-            self._validate_stops_seen(passenger, visited_station_ids)
+            try:
+                self._validate_stops_seen(passenger, visited_station_ids)
+            except Exception:
+                print(f"Recovering state for Passenger {passenger.get_id()}: New trip started.")
+                first_stop = passenger.start_travelling()
+                passenger.stops_seen_so_far = [first_stop]
         self.passengers.append(passenger)
 
 

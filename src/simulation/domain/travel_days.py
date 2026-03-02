@@ -10,12 +10,6 @@ class TravelDays(Enum):
     Saturday = 'S'
     Sunday = 'U'
 
-    MonWedFri = 'MWF'
-    TueThur = 'TR'
-    WorkWeek = 'MTWRF'
-    Weekend = 'SU'
-    Daily = 'MTWRFSU'
-
     def __eq__(self, other) -> bool:
         if isinstance(other, TravelDays):
             return self.value == other.value

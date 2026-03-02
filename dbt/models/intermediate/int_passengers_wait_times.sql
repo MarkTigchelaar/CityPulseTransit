@@ -1,38 +1,30 @@
 {{ config(materialized='view') }}
 
-with passenger_status as (
+with state_transitions as (
+    -- Look at the raw chronological history of every passenger
     select
         passenger_id,
-        clock_tick,
-        station_id,
-        train_id
-    from {{ ref('int_passengers_recent_state') }}
-),
-
-latest_status as (
-    select
-        passenger_id,
-        station_id,
+        clock_tick as boarding_tick,
         train_id,
-        row_number() over (partition by passenger_id order by clock_tick desc) as rn
-    from passenger_status
+        -- Grab the tick and train status from their immediate previous event
+        lag(clock_tick) over (partition by passenger_id order by clock_tick) as arrival_tick,
+        lag(train_id) over (partition by passenger_id order by clock_tick) as prev_train_id
+    from {{ ref('stg_passenger_state') }} 
 ),
 
-currently_waiting as (
+completed_waits as (
+    -- Only calculate wait times for passengers who just successfully boarded
     select
         passenger_id,
-        station_id
-    from latest_status
-    where rn = 1 and train_id is null and station_id is not null
+        (boarding_tick - arrival_tick) as wait_time_ticks
+    from state_transitions
+    where
+        train_id is not null         -- They are now on a train
+        and prev_train_id is null    -- They were previously waiting on a platform
+        and arrival_tick is not null
 )
 
 select
-    cw.passenger_id,
-    max(ps.clock_tick) - min(ps.clock_tick) as wait_time_ticks
-from currently_waiting as cw
-inner join passenger_status as ps
-    on
-        cw.passenger_id = ps.passenger_id
-        and cw.station_id = ps.station_id
-        and ps.train_id is null
-group by cw.passenger_id
+    passenger_id,
+    wait_time_ticks
+from completed_waits

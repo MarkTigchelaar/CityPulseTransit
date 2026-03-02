@@ -1,6 +1,10 @@
 station_id,clock_tick,route_id,platform_state
 1,1,1,Empty
+1,1,2,Empty
+1,1,3,Empty
 2,1,1,Empty
 2,1,2,Empty
+2,1,3,Empty
 3,1,1,Empty
 3,1,2,Empty
+4,1,3,Empty

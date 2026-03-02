@@ -106,7 +106,7 @@ class InitialLoaderState(unittest.TestCase):
                 "passenger_route_id": 101,
                 "start_arrival_hour": 8,
                 "arrival_minute": 0,
-                "travel_code": "MTWRF",
+                "travel_code": "M",
             }
         ]
         self.passenger_routes = [

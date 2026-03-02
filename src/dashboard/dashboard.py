@@ -10,6 +10,11 @@ from src.dashboard.data_service import DataService
 
 REFRESH_SECONDS = 2
 
+st.set_page_config(
+    page_title="City Pulse Transit",
+    page_icon="🚆", 
+    layout="wide"
+)
 
 st_autorefresh(interval=1000, limit=None, key="city_pulse_refresher")
 

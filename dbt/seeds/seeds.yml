@@ -1,19 +1,77 @@
 version: 2
 
 seeds:
+  - name: passenger_itinerary
+    description: "Generated daily travel plans for passengers."
+    tests:
+      - dbt_utils.unique_combination_of_columns:
+          combination_of_columns:
+            - id
+            - passenger_route_id
+            - start_arrival_hour
+            - arrival_minute
+            - travel_code
+    columns:
+      - name: id
+        tests:
+          - not_null
+
+  - name: train_state
+    description: "Physical state and passenger count for trains."
+    columns:
+      - name: train_id
+        tests:
+          - unique
+          - not_null
+      - name: segment_id
+        tests:
+          - not_null
+      - name: passenger_count
+        tests:
+          - not_null
+    config:
+      column_types:
+        stops_seen_so_far: "integer[]"
+  - name: rail_segment_state
+    description: "Physical locations of trains on tracks."
+    columns:
+      - name: segment_id
+        tests:
+          - unique
+          - not_null
+    config:
+      column_types:
+        trains_present: "jsonb"
+  - name: platform_state
+    description: "Passenger state at stations and in trains."
+    tests:
+      - dbt_utils.unique_combination_of_columns:
+          combination_of_columns:
+            - station_id
+            - route_id
+    columns:
+      - name: station_id
+        tests:
+          - not_null
+      - name: route_id
+        tests:
+          - not_null
+      - name: platform_state
+        tests:
+          - not_null
   - name: passenger_state
     config:
       column_types:
         status: varchar(15)
         stops_seen_so_far: "integer[]"
-  - name: rail_segment_state
-    config:
-      column_types:
-        trains_present: "jsonb"
-  - name: train_state
-    config:
-      column_types:
-        stops_seen_so_far: "integer[]"
+  # - name: rail_segment_state
+  #   config:
+  #     column_types:
+  #       trains_present: "jsonb"
+  # - name: train_state
+  #   config:
+  #     column_types:
+  #       stops_seen_so_far: "integer[]"
   - name: trains
     columns:
       - name: train_id

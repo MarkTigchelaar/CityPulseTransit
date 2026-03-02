@@ -67,7 +67,7 @@ class Platform:
         return self.platform_state == PlatformState.MovingPassengers
 
     def embark_passenger(self, passenger: Passenger) -> None:
-        passenger.log_station_exit(self.station_id, self.current_train.get_id())
+        passenger.log_station_exit(None, self.current_train.get_id())
         self.current_train.embark_passenger(passenger)
 
     def disembark_passengers(self) -> list[Passenger]:

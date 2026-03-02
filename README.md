@@ -1,4 +1,5 @@
 # CityPulseTransit
+![Live Dashboard Demonstration](assets/dashboard_demo.gif)
 
 ## Overview
 CityPulseTransit is an end-to-end, event-driven data engineering pipeline and public transit simulation.
@@ -22,7 +23,8 @@ This project was built to demonstrate data engineering design patterns, specific
 To ensure ease of use, this project is built by running a single script. Executing the python build script isolates the environment, installs dependencies, executes a pytest suite, provisions Docker containers, and runs dbt build, mimicking a clean CI/CD deployment pipeline.
 
 ### 2. Idempotent Disaster Recovery
-If the analytical layer crashes, the data consumer can safely replay the entire Kafka retention window with minimal changes. By default, the simulation recovers gracefully from system pauses and continues with zero data corruption. Users are welcome to test this behavior and verify the database state.
+If the analytical layer crashes, the data consumer can safely replay the entire Kafka retention window with minimal changes. By default, the simulation recovers from inturruption, and continues onward. 
+Architectural Note / Known Limitation: Halting the simulation mid-tick (e.g., via a hard SIGINT or Ctrl-C) can occasionally result in a split-brain state where a passenger's internal route history desyncs from the physical train location. Fully resolving this edge-case requires migrating the passenger state table to a Slowly Changing Dimension (SCD Type 2) with explicit valid_from and valid_to timestamps. For the scope of this demonstration, a clean initialization via the build script is recommended after a hard interruption.
 
 ### 3. Decoupled "Clean Slate" UI Architecture
 The presentation layer (Streamlit) is strictly decoupled from the simulation and the message broker. By polling exclusively from dbt's materialized dimensional marts, it cleanly visualizes the live state of the simulation.

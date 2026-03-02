@@ -153,6 +153,7 @@ def main():
         print(i)
         time.sleep(1)
 
+    run_dbt_command("dbt deps", "Building dependencies")
     run_dbt_command("dbt build", "Seeding, Building, and Testing dbt models")
     run_dbt_command("dbt docs generate", "Generating dbt documentation artifacts")
 

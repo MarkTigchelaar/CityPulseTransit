@@ -11,7 +11,7 @@ TOPIC_MAPPING = {
     "rail_segments": "runtime_rail_segment_state",
     "platform_status": "runtime_platform_state",
     "world_clock": "runtime_world_clock_state",
-    "passenger_travelling_state": "runtime_passenger_state",
+    "passenger_status": "runtime_passenger_state",
     "train_status": "runtime_train_state",
 }
 

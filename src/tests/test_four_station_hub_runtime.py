@@ -11,7 +11,7 @@ class TestFourStationHubRuntime(FourStationHubAndSpokeMap):
                 "passenger_route_id": 999,
                 "start_arrival_hour": 8,
                 "arrival_minute": 1,
-                "travel_code": "MTWRF",
+                "travel_code": "M",
             }
         ]
         self.passenger_routes = [
