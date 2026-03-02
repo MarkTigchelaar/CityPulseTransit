@@ -25,16 +25,16 @@ TABLE_UNIQUE_KEYS = {
     "station_passenger_stats": ["clock_tick", "station_id"],
 }
 """
-    NOTE:
-    Larger batch sizes will avoid a performance issue with hitting the db so often.
-    However, this enables the dashboard to be have in a "realtime" manner.
-    It is for development, as a lower priority TODO item is to batch the entire clock tick together, then update
-    the database in one transaction when the next clock tick arrives.
-    With only a additonal degree of statemanagement, the dashboard can consume
-    data per clock tick the same way, but this consumer will be atomic, making
-    the system more stable under inturruptions, and faster, since it wont abuse the database connection.
-    This is very likely to fix the passenger state bug, where inturruptions
-    sometime corrupt the passenger state, since the entire clock tick would be atomic
+    DEV NOTE: The current consumer configuration uses smaller batch sizes to prioritize 
+    near real-time updates for the Streamlit dashboard over database I/O efficiency.
+
+    TODO: Implement atomic micro-batching using `clock_tick` watermarks.
+    By buffering events and committing the entire tick's state in a single database 
+    transaction when the *next* clock tick arrives, we can eliminate database connection 
+    thrashing. This added state management makes the consumer fully atomic, 
+    resolving the passenger state corruption bug (see README) by cleanly rolling back any incomplete 
+    ticks if the system is interrupted mid-stream.
+    Updating passenger state to use a from_clock_tick, and a to_clock_tick is still desirable.
 """
 BATCH_SIZE = 1
 
