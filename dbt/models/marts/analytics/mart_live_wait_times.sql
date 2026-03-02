@@ -8,7 +8,6 @@ with stats as (
     from {{ ref('int_passengers_wait_times') }}
 )
 
--- Unpivot the columns into rows so Altair can consume it more easily
 select
     'Max' as metric,
     max_wait as wait_time
