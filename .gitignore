@@ -9,7 +9,7 @@ venv/
 dbt_packages/
 target/
 logs/
-
+package-lock.yml
 # Docker
 .env
 
