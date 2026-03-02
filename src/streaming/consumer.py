@@ -24,10 +24,18 @@ TABLE_UNIQUE_KEYS = {
     "runtime_platform_state": ["clock_tick", "station_id", "route_id"],
     "station_passenger_stats": ["clock_tick", "station_id"],
 }
-
-# NOTE:
-# Larger batch sizes will avoid a performance issue with hitting the db so often.
-# However, this enables the dashboard to be have in a "realtime" manner.
+"""
+    NOTE:
+    Larger batch sizes will avoid a performance issue with hitting the db so often.
+    However, this enables the dashboard to be have in a "realtime" manner.
+    It is for development, as a lower priority TODO item is to batch the entire clock tick together, then update
+    the database in one transaction when the next clock tick arrives.
+    With only a additonal degree of statemanagement, the dashboard can consume
+    data per clock tick the same way, but this consumer will be atomic, making
+    the system more stable under inturruptions, and faster, since it wont abuse the database connection.
+    This is very likely to fix the passenger state bug, where inturruptions
+    sometime corrupt the passenger state, since the entire clock tick would be atomic
+"""
 BATCH_SIZE = 1
 
 
