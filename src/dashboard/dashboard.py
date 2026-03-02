@@ -109,7 +109,7 @@ class TransitDashboard:
             self.render_wait_times()
 
     def render_live_map(self):
-        st.subheader("Live Fleet Movement")
+        st.subheader("📍Live Fleet Movement")
 
         fleet_df = self.data_service.fetch_fleet_status()
         topology_df = self.data_service.fetch_map_topology()
@@ -203,7 +203,7 @@ class TransitDashboard:
         )
 
     def render_crowd_meter(self):
-        st.subheader("Station Crowd Volume")
+        st.subheader("🌡️ Station Crowd Density")
         station_crowding_df = self.data_service.fetch_station_crowding_status()
         if station_crowding_df.empty:
             st.info("Awaiting passenger data...")
@@ -230,7 +230,7 @@ class TransitDashboard:
         st.altair_chart(chart, use_container_width=True, theme=None)
 
     def render_fleet_matrix(self):
-        st.subheader("Fleet Status Matrix")
+        st.subheader("🏗️ Fleet Status Matrix")
         fleet_df = self.data_service.fetch_fleet_status()
         if fleet_df.empty:
             st.info("No trains currently active in the network.")
@@ -264,7 +264,7 @@ class TransitDashboard:
         }
 
     def render_headway_monitor(self):
-        st.subheader("Train bunching")
+        st.subheader("📏 Route Headway & Spacing")
         headway_df = self.data_service.fetch_headway_status()
         if headway_df.empty:
             st.info("Insufficient data to calculate headways.")
@@ -334,7 +334,7 @@ class TransitDashboard:
         st.altair_chart(chart, use_container_width=True, theme=None)
 
     def render_network_map(self):
-        st.subheader("Network Topology")
+        st.subheader("🕸️ Network Topology")
         map_df = self.data_service.fetch_static_map()
         if map_df.empty:
             st.warning("No network topology found.")
