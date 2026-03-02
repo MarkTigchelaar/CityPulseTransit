@@ -31,10 +31,7 @@ TABLE_UNIQUE_KEYS = {
     TODO: Implement atomic micro-batching using `clock_tick` watermarks.
     By buffering events and committing the entire tick's state in a single database 
     transaction when the *next* clock tick arrives, we can eliminate database connection 
-    thrashing. This added state management makes the consumer fully atomic, 
-    resolving the passenger state corruption bug (see README) by cleanly rolling back any incomplete 
-    ticks if the system is interrupted mid-stream.
-    Updating passenger state to use a from_clock_tick, and a to_clock_tick is still desirable.
+    thrashing. This added state management makes the consumer fully atomic.
 """
 BATCH_SIZE = 1
 
