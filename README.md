@@ -78,7 +78,7 @@ On Windows:
 python run.py
 ```
 
-### 5. Open dahsboards, and data dictionary
+### 5. Open dashboards, and data dictionary
 in your browser, open any of the following to observe the architecture, or the dashboard of the system:
 
 ```
