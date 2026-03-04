@@ -1,13 +1,21 @@
-{{ config(materialized='view') }}
+with passenger_state as (
+    select * from {{ ref('stg_passenger_state') }}
+),
 
-with state_transitions as (
+state_transitions as (
     select
         passenger_id,
         clock_tick as boarding_tick,
         train_id,
-        lag(clock_tick) over (partition by passenger_id order by clock_tick) as arrival_tick,
-        lag(train_id) over (partition by passenger_id order by clock_tick) as prev_train_id
-    from {{ ref('stg_passenger_state') }} 
+        lag(clock_tick) over (
+            partition by passenger_id 
+            order by clock_tick
+        ) as arrival_tick,
+        lag(train_id) over (
+            partition by passenger_id 
+            order by clock_tick
+        ) as prev_train_id
+    from passenger_state
 ),
 
 completed_waits as (

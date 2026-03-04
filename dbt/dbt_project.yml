@@ -21,5 +21,9 @@ clean-targets:
 
 models:
   subway_system:
-    # Configures models to be materialized as views by default
-    +materialized: view
+    staging:
+      +materialized: view
+    intermediate:
+      +materialized: view
+    marts:
+      +materialized: view

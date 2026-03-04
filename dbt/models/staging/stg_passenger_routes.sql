@@ -1,7 +1,17 @@
-{{ config(materialized='view') }}
+with source as (
+    select * from {{ ref('passenger_routes') }}
+),
+
+renamed as (
+    select
+        cast(route_id as int) as route_id,
+        cast(stop_sequence as int) as stop_sequence,
+        cast(station_id as int) as station_id
+    from source
+)
 
 select
-    cast(route_id as int) as route_id,
-    cast(stop_sequence as int) as stop_sequence,
-    cast(station_id as int) as station_id
-from {{ ref('passenger_routes') }}
+    route_id,
+    stop_sequence,
+    station_id
+from renamed

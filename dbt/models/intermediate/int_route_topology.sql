@@ -1,6 +1,16 @@
-{{ config(materialized='view') }}
+with routes as (
+    select * from {{ ref('stg_routes') }}
+),
 
-with route_stops as (
+stations as (
+    select * from {{ ref('stg_stations') }}
+),
+
+segments as (
+    select * from {{ ref('rail_segments') }}
+),
+
+route_stops as (
     select
         r.route_id,
         r.stop_sequence,
@@ -12,9 +22,8 @@ with route_stops as (
             partition by r.route_id
             order by r.stop_sequence
         ) as previous_station_id
-    from {{ ref('stg_routes') }} as r
-    inner join {{ ref('stg_stations') }} as s
-        on r.station_id = s.station_id
+    from routes as r
+    inner join stations as s on r.station_id = s.station_id
 ),
 
 segment_lengths as (
@@ -26,13 +35,12 @@ segment_lengths as (
         rs.map_y,
         coalesce(seg.distance_km, 0) as segment_km
     from route_stops as rs
-    left join {{ ref('rail_segments') }} as seg
-        on
-            rs.previous_station_id = seg.from_station_id
-            and rs.station_id = seg.to_station_id
+    left join segments as seg
+        on rs.previous_station_id = seg.from_station_id
+        and rs.station_id = seg.to_station_id
 ),
 
-linear_coordinates as (
+linear_calculations as (
     select
         route_id,
         stop_sequence,
@@ -46,6 +54,19 @@ linear_coordinates as (
             rows between unbounded preceding and current row
         ) as distance_from_start_km
     from segment_lengths
+),
+
+final as (
+    select
+        route_id,
+        stop_sequence,
+        station_name,
+        map_x,
+        map_y,
+        segment_km,
+        distance_from_start_km,
+        max(distance_from_start_km) over () as max_system_length_km
+    from linear_calculations
 )
 
 select
@@ -56,7 +77,6 @@ select
     map_y,
     segment_km,
     distance_from_start_km,
-    -- Dont collapse all rows down
-    max(distance_from_start_km) over (/* linear_coordinates */) as max_system_length_km
-from linear_coordinates
+    max_system_length_km
+from final
 order by route_id, stop_sequence
