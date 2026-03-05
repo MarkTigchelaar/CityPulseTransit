@@ -1,5 +1,6 @@
 with passenger_state as (
     select * from {{ ref('stg_passenger_state') }}
+    where station_id is not null or train_id is not null
 ),
 
 state_transitions as (
