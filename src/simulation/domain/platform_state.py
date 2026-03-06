@@ -1,7 +1,5 @@
 from enum import Enum
 
-TRAIN_LIMIT_PER_SEGMENT = 75
-
 
 class PlatformState(Enum):
     Empty = "Empty"

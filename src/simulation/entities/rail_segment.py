@@ -2,7 +2,8 @@ from collections import deque
 from src.simulation.entities.train import Train
 from src.simulation.entities.world_clock import WorldClock
 from src.simulation.data_streams.system_event_bus import SystemEventBus
-from src.simulation.domain.platform_state import TRAIN_LIMIT_PER_SEGMENT
+
+TRAIN_LIMIT_PER_SEGMENT = 75
 
 
 class _TrainWithLocation:

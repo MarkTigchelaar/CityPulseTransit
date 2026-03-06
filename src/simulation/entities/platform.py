@@ -50,7 +50,6 @@ class Platform:
         self.current_train = train
         self.current_train.record_station_visit(self.station_id)
         self.current_train.record_passenger_states()
-        # self.platform_state = PlatformState.next_state(self.platform_state)
         self.log_train_state()
 
     def platform_empty_state(self) -> bool:
