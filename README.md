@@ -28,7 +28,7 @@ If the analytical layer crashes, the data consumer can safely replay the entire 
 Architectural Note / Known Limitation: Halting the simulation mid-tick (e.g., via a hard SIGINT or Ctrl-C) can occasionally result in a split-brain state.
 
 A passenger's internal route history can desync from the physical train location. 
-Fully resolving this edge-case requires migrating the passenger state table to a Slowly Changing Dimension (SCD Type 2) with explicit valid_from and valid_to timestamps. 
+This issue is likely fixed, but full testing is still needed, as of March 5, 2026. Will complete test March 6, 2026, and update.
 
 For the scope of this demonstration, a clean initialization via the build script is recommended after a hard interruption.
 
