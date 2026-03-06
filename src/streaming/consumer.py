@@ -45,16 +45,11 @@ def consume_and_store():
 
     # NOTE: Data recovery strategy
     # I use a static 'group.id' here so the consumer resumes exactly where
-    # it left off after a restart, avoiding unnecessary compute.
+    # it left off after a restart, avoiding duplicate effort.
     #
     # To execute a historical backfill (Disaster Recovery), we would either:
     #   1. Use the Kafka CLI to reset the group's offsets to 0.
     #   2. Spin up a new consumer with a unique group.id and 'auto.offset.reset': 'earliest'.
-    #
-    # Because our Postgres landing tables are strictly constrained with UNIQUE
-    # composite keys, we can safely replay the entire Kafka retention window.
-    # SQLAlchemy's ON CONFLICT DO UPDATE will idempotently heal the state
-    # without duplicating historical records.
     consumer = KafkaConsumer(
         *topics,
         bootstrap_servers=[HOST_NAME + ":" + KAFKA_BROKER_PORT],
