@@ -78,6 +78,13 @@ class Passenger:
         return self.passenger_id
 
     def record_station_visit(self, current_station_id: int) -> None:
+        if (
+            len(self.visited_station_ids) > 0
+            and self.visited_station_ids[-1] == current_station_id
+        ):
+            raise Exception(
+                f"passenger {self.get_id()} already saw station {current_station_id}"
+            )
         self.visited_station_ids.append(current_station_id)
 
     def is_on_last_stop(self) -> bool:
@@ -88,13 +95,9 @@ class Passenger:
             self.visited_station_ids, station_id
         )
 
-    def log_station_entry(self, station_id: int, train_id: int = None) -> None:
-        self._log_passenger_travelling_state(station_id, train_id)
-
-    def log_station_exit(self, station_id: int, train_id: int = None) -> None:
-        self._log_passenger_travelling_state(station_id, train_id)
-
-    def _log_passenger_travelling_state(self, station_id: int, train_id: int = None) -> None:
+    def log_passenger_travelling_state(
+        self, station_id: int, train_id: int = None
+    ) -> None:
         state = {
             "passenger_id": self.passenger_id,
             "clock_tick": self.clock.get_current_clock_tick(),

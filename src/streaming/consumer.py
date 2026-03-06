@@ -1,5 +1,6 @@
 import json
 import time
+from typing import Any
 from kafka import KafkaConsumer
 from sqlalchemy import create_engine, MetaData, Table
 from sqlalchemy.dialects.postgresql import insert
@@ -24,16 +25,14 @@ TABLE_UNIQUE_KEYS = {
     "runtime_platform_state": ["clock_tick", "station_id", "route_id"],
     "station_passenger_stats": ["clock_tick", "station_id"],
 }
-"""
-    DEV NOTE: The current consumer configuration uses smaller batch sizes to prioritize 
-    near real-time updates for the Streamlit dashboard over database I/O efficiency.
 
-    TODO: Implement atomic micro-batching using `clock_tick` watermarks.
-    By buffering events and committing the entire tick's state in a single database 
-    transaction when the *next* clock tick arrives, we can eliminate database connection 
-    thrashing. This added state management makes the consumer fully atomic.
-"""
-BATCH_SIZE = 1
+
+def make_topic_list() -> list[str]:
+    return list(TOPIC_MAPPING.keys())
+
+
+def generate_buffer() -> dict[str, Any]:
+    return {topic: [] for topic in make_topic_list()}
 
 
 def get_db_engine():
@@ -41,7 +40,7 @@ def get_db_engine():
 
 
 def consume_and_store():
-    topics = list(TOPIC_MAPPING.keys())
+    topics = make_topic_list()
     print(f"Connecting to Kafka topics: {topics}...")
 
     # NOTE: Data recovery strategy
@@ -66,22 +65,30 @@ def consume_and_store():
 
     engine = get_db_engine()
     metadata = MetaData(schema="public_transit")
-    buffers = {topic: [] for topic in topics}
 
     print("Consumer started. Waiting for data...")
-
+    data_buffer = generate_buffer()
     for message in consumer:
         topic = message.topic
         data = message.value
-        if topic in buffers:
-            buffers[topic].append(data)
-            if len(buffers[topic]) >= BATCH_SIZE:
-                target_table = TOPIC_MAPPING[topic]
-                insert_batch(engine, buffers[topic], metadata, target_table)
-                buffers[topic] = []
+
+        if topic not in data_buffer:
+            raise KeyError(f"Consumer topic key {topic} is invalid")
+
+        if topic == "world_clock":
+            insert_batch(engine, data_buffer, metadata)
+            data_buffer = generate_buffer()
+        data_buffer[topic].append(data)
 
 
-def insert_batch(db_engine, data_list, metadata, table_name):
+def insert_batch(db_engine, data_buffer, metadata):
+    for topic in data_buffer:
+        data_list = data_buffer[topic]
+        table_name = TOPIC_MAPPING[topic]
+        insert_topic(db_engine, data_list, metadata, table_name)
+
+
+def insert_topic(db_engine, data_list, metadata, table_name):
     if not data_list:
         return
 
@@ -89,23 +96,17 @@ def insert_batch(db_engine, data_list, metadata, table_name):
         table = Table(table_name, metadata, autoload_with=db_engine)
         stmt = insert(table).values(data_list)
         unique_cols = TABLE_UNIQUE_KEYS[table_name]
-
-        # Build the dictionary of columns to overwrite if a conflict occurs.
-        # 'stmt.excluded' refers to the new data trying to be inserted.
-        # We overwrite everything EXCEPT the unique keys and the creation timestamp.
         update_dict = {
             c.name: c
             for c in stmt.excluded
             if c.name not in unique_cols and c.name != "created_at"
         }
 
-        # Attach the ON CONFLICT DO UPDATE clause
         if update_dict:
             upsert_stmt = stmt.on_conflict_do_update(
                 index_elements=unique_cols, set_=update_dict
             )
         else:
-            # Fallback just in case a table has no updatable columns
             upsert_stmt = stmt.on_conflict_do_nothing(index_elements=unique_cols)
 
         conn.execute(upsert_stmt)

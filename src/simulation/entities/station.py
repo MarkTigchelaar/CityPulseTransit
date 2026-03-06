@@ -22,15 +22,16 @@ class Station:
     ):
         self.id = int(station_id)
         self.name = station_name
-        self.passengers = passengers
+        self.disembarked_passengers = []
+        self.waiting_passengers = passengers
         self.incoming_segments = incoming_segments
         self.outgoing_segments_lookup = {
             segment.get_station_ids()["to"]: segment for segment in outgoing_segments
         }
         self.system_event_bus = system_event_bus
         self.platforms = []
-        self._configure_platforms(platform_states, trains)
         self.clock = clock
+        self._configure_platforms(platform_states, trains)
         self.passengers_boarded_trains = 0
         self.passengers_entered_station = 0
 
@@ -62,112 +63,141 @@ class Station:
                 platform_state,
                 train_on_platform,
                 self.system_event_bus,
+                self.clock,
             )
             self.platforms.append(platform)
 
+    def receive_passenger(self, new_passenger: Passenger) -> None:
+        new_passenger.record_station_visit(self.id)
+        new_passenger.log_passenger_travelling_state(self.id)
+        self.waiting_passengers.append(new_passenger)
+
     def process(self) -> None:
-        self._accept_incoming_trains()
-        self._disembark_passengers()
-        self._process_finished_passengers()
-        self._embark_passengers()
-        self._depart_trains()
-        self._advance_platform_states()
+        self._process_train_arrivals()
+        self._move_passengers()
+        self._process_train_departures()
+        self._update_platform_states()
         self._log_current_traffic()
 
-    def _accept_incoming_trains(self) -> None:
+    def _process_train_arrivals(self) -> None:
         for platform in self.platforms:
-            route_id = platform.get_route_id()
-            if platform.has_train():
+            if not platform.platform_empty_state():
                 continue
+            if platform.has_train():
+                raise Exception("Platform is not in empty state")
             for rail_segment in self.incoming_segments:
                 if not rail_segment.has_trains():
                     continue
                 if not rail_segment.is_lead_train_at_end():
                     continue
                 train_route_id = rail_segment.get_lead_train_route_id()
-                if train_route_id == route_id:
+                if train_route_id == platform.get_route_id():
                     next_train = rail_segment.release_train()
-                    platform.add_train(next_train)
+                    platform._process_train_arrivals(next_train)
+                    # Empty -> TrainArriving
+                    platform.update_state()
                     break
 
-    def _disembark_passengers(self) -> None:
-        for platform in self.platforms:
-            for arrived_passenger in platform.disembark_passengers():
-                arrived_passenger.log_station_entry(
-                    self.id, platform.current_train_id()
+    def _move_passengers(self) -> None:
+        disembarked_passengers = self._disembark_passengers()
+
+        # Ensures freshly disembarked passengers
+        # are processed after passengers that were already waiting
+        self.waiting_passengers.extend(disembarked_passengers)
+        finished_passengers = self._seperate_finished_passengers()
+        boarded_passengers = self._board_passengers()
+        for passenger in finished_passengers:
+            passenger.log_passenger_travelling_state(
+                station_id=self.get_id(), train_id=None
+            )
+            self.passengers_entered_station += 1
+            passenger.stop_travelling()
+        for passenger, train_id in boarded_passengers:
+            passenger.log_passenger_travelling_state(station_id=None, train_id=train_id)
+        for passenger in disembarked_passengers:
+            if passenger in self.waiting_passengers:
+                passenger.log_passenger_travelling_state(
+                    station_id=self.get_id(), train_id=None
                 )
-                self.receive_passenger(arrived_passenger, entering_system=False)
                 self.passengers_entered_station += 1
 
-    def _embark_passengers(self) -> None:
+    def _seperate_finished_passengers(self) -> list[Passenger]:
+        finished_passengers = []
+        for passenger in self.waiting_passengers:
+            if passenger.is_on_last_stop():
+                finished_passengers.append(passenger)
+        self._filter_waiting_passengers(finished_passengers)
+        return finished_passengers
+
+    def _filter_waiting_passengers(self, filter_list: list[Passenger]) -> None:
+        id_list = [p.get_id() for p in filter_list]
+        self.waiting_passengers = [
+            passenger
+            for passenger in self.waiting_passengers
+            if passenger.get_id() not in id_list
+        ]
+
+    def _disembark_passengers(self) -> list[Passenger]:
+        disembarked_passengers = []
         for platform in self.platforms:
-            embarked_passengers = []
+            if not platform.can_move_passengers():
+                continue
+            disembarked_passengers.extend(platform.disembark_passengers())
+        return disembarked_passengers
+
+    def _board_passengers(self) -> list[Passenger]:
+        boarded_passengers = []
+        for platform in self.platforms:
+            if not platform.can_move_passengers():
+                continue
             if not platform.has_train():
-                continue
-            if not platform.can_board_passengers():
-                continue
+                raise Exception("Attempt to board on platform with no train.")
             trains_next_stop = platform.get_next_station_id_for_train()
-            for passenger in self.passengers:
+            boarded_this_platform = []
+            for passenger in self.waiting_passengers:
                 if platform.train_is_full():
                     break
                 passenger_next_stop = passenger.get_next_station_id_on_route(self.id)
                 if passenger_next_stop is None:
                     continue
                 if trains_next_stop == passenger_next_stop:
-                    embarked_passengers.append(passenger)
+                    boarded_passengers.append((passenger, platform.current_train_id()))
+                    boarded_this_platform.append(passenger)
                     platform.embark_passenger(passenger)
+                    self._filter_waiting_passengers(boarded_this_platform)
 
-            self.passengers_boarded_trains += len(embarked_passengers)
-            for passenger in embarked_passengers:
-                self.passengers.remove(passenger)
+        self.passengers_boarded_trains += len(boarded_passengers)
+        return boarded_passengers
 
-    def _process_finished_passengers(self) -> None:
-        passengers_done_travelling = []
-        for passenger in self.passengers:
-            if passenger.is_on_last_stop():
-                passengers_done_travelling.append(passenger)
-        for passenger in passengers_done_travelling:
-            self.passengers.remove(passenger)
-            passenger.log_station_exit(self.id)
-            passenger.stop_travelling()
-
-    def receive_passenger(
-        self, passenger: Passenger, entering_system: bool = True
-    ) -> None:
-        if passenger in self.passengers:
-            raise Exception(f"Passenger {passenger.get_id()} in station {self.name} already!")
-        if entering_system:
-            passenger.record_station_visit(self.id)
-            passenger.log_station_entry(self.id)
-        self.passengers.append(passenger)
-
-    def _depart_trains(self) -> None:
+    def _process_train_departures(self) -> None:
         for platform in self.platforms:
-            if not platform.has_train():
+            if not platform.train_ready_for_departure():
                 continue
-            if platform.train_ready_for_departure():
-                next_station_id = platform.get_next_station_id_for_train()
-                if next_station_id not in self.outgoing_segments_lookup:
+            if not platform.has_train():
+                raise Exception("Attempted to depart on platform with not train.")
+            next_station_id = platform.get_next_station_id_for_train()
+            if next_station_id not in self.outgoing_segments_lookup:
+                raise Exception(
+                    f"Outgoing train attempting to go station {next_station_id} from {self.name}:{self.id}, but no connection exists from station"
+                )
+            rail_segment = self.outgoing_segments_lookup[next_station_id]
+            if rail_segment.can_take_another_train():
+                train = platform.remove_train()
+                rail_segment.accept_train(train)
 
-                    raise Exception(
-                        f"Outgoing train attempting to go station {next_station_id} from {self.name}:{self.id}, but no connection exists from station"
-                    )
-                rail_segment = self.outgoing_segments_lookup[next_station_id]
-                if rail_segment.can_take_another_train():
-                    train = platform.remove_train()
-                    rail_segment.accept_train(train)
-
-    def _advance_platform_states(self) -> None:
+    def _update_platform_states(self) -> None:
         for platform in self.platforms:
+            if platform.platform_empty_state():
+                continue
             platform.update_state()
 
     def _log_current_traffic(self) -> None:
         passengers_in_trains = 0
         for platform in self.platforms:
-            platform.produce_state(self.clock.get_current_clock_tick())
+            platform.produce_state()
             passengers_in_trains += platform.current_train_passenger_count()
 
-        passengers_waiting = len(self.passengers)
+        passengers_waiting = len(self.waiting_passengers)
         total_passengers_on_premises = passengers_in_trains + passengers_waiting
         state = {
             "station_id": self.id,

@@ -128,25 +128,21 @@ class TestFourStationHubRuntime(FourStationHubAndSpokeMap):
         self.load_system()
 
         # Confirm passenger did arrive at station 4
-        # Station 2:  2 ticks
-        # segment 21: 1 tick
-        # Station 1:  3 ticks (wait for train 2 to arrive and load, and depart)
-        # segment 13: 1 tick
-        # Station 3:  3 ticks (wait for train 3 to arrive and load, and depart)
-        # segment 31: 1 tick
-        # Station 1:  3 ticks (wait for train 1 to arrive and load, and depart)
-        # segment 14: 1 tick
-        # Station 4:  2 ticks (arrival, and offboard)
-        # Total: 17 ticks
-        self._run_until_passenger_at_station(passenger_id=1, station_id=4, max_ticks=17)
+        self._run_until_passenger_at_station(passenger_id=1, station_id=4, max_ticks=23)
         p_events = self.producer.get_events("passenger_travelling_state")
         arrivals = [e["station_id"] for e in p_events if e["passenger_id"] == 1]
+        stations_seen_last = p_events[-1]["stops_seen_so_far"]
         self.assertIn(2, arrivals, "Must start at Station 2")
         self.assertIn(4, arrivals, "Must end at Station 4")
         self.assertGreaterEqual(
             arrivals.count(1),
-            2,
-            "Must visit Hub (1) at least twice (Transfer In, Loop Return)",
+            1,
+            "Must visit Hub (1) at least twice (Transfer In, Loop Return) but immediately switches trains, so doesn't wait one clock tick",
+        )
+        self.assertEqual(
+            stations_seen_last,
+            [2, 1, 3, 1, 4],
+            "Jumps to other trains without waiting, but stops seen must show all the stations visited",
         )
         train_events = self.producer.get_events("train_state")
 

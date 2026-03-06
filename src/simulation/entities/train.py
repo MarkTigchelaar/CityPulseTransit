@@ -29,7 +29,6 @@ class Train:
     def embark_passenger(self, passenger: Passenger) -> None:
         if self.at_capacity():
             raise Exception("Attempted to add passenger to train, when full")
-
         self.passengers[passenger.get_id()] = passenger
 
     def disembark_passengers(self, current_station_id: int) -> list[Passenger]:
@@ -71,6 +70,12 @@ class Train:
         self.station_ids_visited.append(current_station_id)
         for passenger_id in self.passengers:
             self.passengers[passenger_id].record_station_visit(current_station_id)
+
+    def record_passenger_states(self):
+        for passenger_id in self.passengers:
+            self.passengers[passenger_id].log_passenger_travelling_state(
+                station_id=None, train_id=self.get_id()
+            )
 
     def get_next_station_id_on_route(self, current_station_id: int) -> int:
         next_station_id = self.route.get_next_station_id(

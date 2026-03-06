@@ -177,14 +177,13 @@ class TestTwoStationRuntime(TwoStationLineMap):
         self.segment_state[0]["trains_present"].append({"id": 1, "position_km": 9.5})
         self.load_system()
         self.run_once()
-        self.run_once()
         train_events = self.producer.get_events("train_state")
         self.assertEqual(
             train_events[-1]["passenger_count"],
             1,
             "Train should have one passenger when arriving",
         )
-
+        self.run_once()
         self.run_once()
         train_events = self.producer.get_events("train_state")
         self.assertEqual(
@@ -195,16 +194,21 @@ class TestTwoStationRuntime(TwoStationLineMap):
         station_events = self.producer.get_events("station_state")
         stn2_events = [e for e in station_events if e["station_id"] == 2]
         self.assertEqual(
-            stn2_events[-1]["passengers_boarded_trains"],
-            0,
-            "No passengers should board, passenger is alighting",
-        )
-        self.assertEqual(
             stn2_events[-1]["passengers_entered_station"],
             1,
             "One passenger should have exited train, and entered station",
         )
-
+        self.run_once()
+        self.run_once()
+        self.run_once()
+        station_events = self.producer.get_events("station_state")
+        stn2_events = [e for e in station_events if e["station_id"] == 2]
+        self.assertEqual(
+            stn2_events[-1]["passengers_boarded_trains"],
+            0,
+            "No passengers should board, passenger is alighting",
+        )
+        self.run_once()
         pass_events = self.producer.get_events("passenger_travelling_state")
         self.assertEqual(pass_events[0]["train_id"], 1)
         self.assertEqual(pass_events[1]["train_id"], None)

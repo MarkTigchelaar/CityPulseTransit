@@ -48,7 +48,7 @@ class TestComponentLoader(InitialLoaderState):
         for station_id in stations:
             target_station = stations[station_id]
 
-            passenger_ids_in_station = [p.get_id() for p in target_station.passengers]
+            passenger_ids_in_station = [p.get_id() for p in target_station.waiting_passengers]
             self.assertNotIn(
                 1,
                 passenger_ids_in_station,
@@ -70,7 +70,7 @@ class TestComponentLoader(InitialLoaderState):
         stations = loader.get_stations()
         target_station = stations[1]
 
-        passenger_ids_in_station = [p.get_id() for p in target_station.passengers]
+        passenger_ids_in_station = [p.get_id() for p in target_station.waiting_passengers]
         self.assertIn(
             1, passenger_ids_in_station, "Passenger 1 should be inside Station 1"
         )

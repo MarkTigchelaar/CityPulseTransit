@@ -3,7 +3,7 @@ from src.simulation.data_reader.table_data_reader import TableDataReader
 from src.simulation.data_streams.live_producer import LiveProducer
 import time
 
-ONE_BILLION = 1000 * 1000 * 1000
+ONE_MILLION = 1000 * 1000
 
 
 class TransitSystem:
@@ -20,15 +20,15 @@ class TransitSystem:
     def run(self):
         print("Transit system is running.")
         start_tick = self.world_clock.get_current_clock_tick()
-        for i in range(ONE_BILLION):
+        for i in range(ONE_MILLION):
             print(f"--- ⏱️ Tick {start_tick + i} ---")
             self.run_once()
             time.sleep(1)
 
     def run_once(self):
         self.world_clock.tick()
-        self._process_passengers()
         self._process_stations()
+        self._process_passengers()
         self._process_rail_segments()
 
     def _process_passengers(self):
