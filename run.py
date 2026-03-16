@@ -15,24 +15,30 @@ from src.config import (
 
 processes = []
 
-
 def cleanup(signum=None, frame=None):
     print("\n[CLEANUP] Shutting down all services gracefully...")
     for p in processes:
         if p.poll() is None:
             try:
-                os.killpg(os.getpgid(p.pid), signal.SIGTERM)
+                if sys.platform == 'win32':
+                    # Windows shutdown
+                    p.send_signal(signal.CTRL_BREAK_EVENT)
+                    p.terminate()
+                else:
+                    # POSIX (Linux/Mac) shutdown
+                    os.killpg(os.getpgid(p.pid), signal.SIGTERM)
             except Exception:
                 pass  # Process might have already died
 
     print("[CLEANUP] System Offline. State is safely parked.")
     sys.exit(0)
 
-# A clock tick in the simulation can be inturrupted
+
+# A clock tick in the simulation can be interrupted
 # before all components update the db.
 # This is data corruption
 # Trimming off the state of the last 2 clock ticks eliminates
-# the potential of this occuring.
+# the potential of this occurring.
 def trim_latest_clock_ticks():
     try:
         conn = psycopg2.connect(
@@ -80,20 +86,27 @@ def main():
     print("🚂 CityPulse Transit System Initializing...")
     trim_latest_clock_ticks()
 
+    # Cross-platform kwargs for process grouping
+    popen_kwargs = {}
+    if sys.platform == 'win32':
+        popen_kwargs['creationflags'] = subprocess.CREATE_NEW_PROCESS_GROUP
+    else:
+        popen_kwargs['preexec_fn'] = os.setsid
+
     print("-> Starting Kafka Consumer...")
     p_consumer = subprocess.Popen(
         [sys.executable, "-m", "src.streaming.consumer"],
         cwd=os.getcwd(),
-        # Creates a strict process group boundary
-        preexec_fn=os.setsid,
+        **popen_kwargs
     )
     processes.append(p_consumer)
     time.sleep(3)
     
-
     print("-> Starting Train Simulation...")
     p_producer = subprocess.Popen(
-        [sys.executable, "-m", "src.simulation.transit_system"], cwd=os.getcwd(), preexec_fn=os.setsid
+        [sys.executable, "-m", "src.simulation.transit_system"], 
+        cwd=os.getcwd(), 
+        **popen_kwargs
     )
     processes.append(p_producer)
 
@@ -101,18 +114,25 @@ def main():
     p_dashboard = subprocess.Popen(
         [sys.executable, "-m", "streamlit", "run", "src/dashboard/dashboard.py", "--server.headless=true"],
         cwd=os.getcwd(),
-        preexec_fn=os.setsid,
         stdout=subprocess.DEVNULL,
+        **popen_kwargs
     )
     processes.append(p_dashboard)
 
     print("-> Serving dbt Documentation...")
+    # Note: On Windows, dbt is usually a command-line executable, so we use shell=True 
+    # if it's not explicitly run through the python executable
+    dbt_cmd = ["dbt", "docs", "serve", "--port", "8081", "--no-browser"]
+    if sys.platform == 'win32':
+        # Safest way to run command line tools on Windows subprocess
+        dbt_cmd = ["cmd.exe", "/c"] + dbt_cmd
+
     p_docs = subprocess.Popen(
-        ["dbt", "docs", "serve", "--port", "8081", "--no-browser"],
+        dbt_cmd,
         cwd=os.path.join(os.getcwd(), "dbt"),
-        preexec_fn=os.setsid,
         stdout=subprocess.DEVNULL,
         stderr=subprocess.DEVNULL,
+        **popen_kwargs
     )
     processes.append(p_docs)
 

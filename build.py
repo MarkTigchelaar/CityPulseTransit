@@ -108,8 +108,21 @@ def run_dbt_command(command, desc):
 
 def eradicate_zombies():
     try:
-        subprocess.run(["pkill", "-f", "consumer.py"], stderr=subprocess.DEVNULL)
-        subprocess.run(["pkill", "-f", "run.py"], stderr=subprocess.DEVNULL)
+        if sys.platform == "win32":
+            # Native Windows command to find and kill specific Python scripts
+            subprocess.run(
+                'wmic process where "commandline like \'%consumer.py%\'" call terminate',
+                shell=True, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL
+            )
+            subprocess.run(
+                'wmic process where "commandline like \'%run.py%\'" call terminate',
+                shell=True, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL
+            )
+        else:
+            # Native Linux/macOS command
+            subprocess.run(["pkill", "-f", "consumer.py"], stderr=subprocess.DEVNULL)
+            subprocess.run(["pkill", "-f", "run.py"], stderr=subprocess.DEVNULL)
+            
         print("Process table sanitized.")
     except Exception as e:
         print(f"Zombie sweep failed: {e}")
