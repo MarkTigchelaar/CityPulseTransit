@@ -7,7 +7,7 @@ CityPulseTransit is an end-to-end, event-driven data engineering pipeline and pu
 It models a live transit network, streaming real-time passenger and fleet telemetry through a distributed architecture to power a live analytical dashboard.
 
 This project was built to demonstrate data engineering design patterns, specifically:
-**streaming data capture, idempotent state recovery, dimensional modeling, and decoupled presentation layers.**
+**streaming data capture, dimensional modeling, and decoupled presentation layers.**
 
 ## Architecture & Tech
 
@@ -83,9 +83,14 @@ Kafka Dashboard:   http://localhost:8080
 
 
 ### AI Pair Programming
+```
 In building CityPulseTransit, I utilized Gemini as an accelerator and architectural sounding board. 
 
 While the core system design, domain logic, and data pipelines are my own, 
 Gemini assisted in rapidly prototyping the Streamlit dashboard, debugging complex Python state-recovery issues, and scaffolding boilerplate. 
 
 Using an LLM to discuss the trade-offs of various event-driven patterns allowed me to significantly compress the development and testing cycles while maintaining a high standard of correctness, despite the complexities of the system.
+
+However, I did find that Gemini needed to be tightly supervised.
+My judgement and careful observation kept the project from being derailed by hallucinations, as well as sychophancy, the second being more pernicious issue.
+```
