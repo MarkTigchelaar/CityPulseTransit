@@ -71,6 +71,7 @@
     CREATE INDEX IF NOT EXISTS idx_segment_state_tick_id ON public_transit.runtime_rail_segment_state (clock_tick DESC, segment_id);
     CREATE INDEX IF NOT EXISTS idx_station_stats_tick_id ON public_transit.station_passenger_stats (clock_tick DESC, station_id);
     CREATE INDEX IF NOT EXISTS idx_world_clock_tick ON public_transit.runtime_world_clock_state (clock_tick DESC);
+    CREATE INDEX IF NOT EXISTS idx_platform_state_tick_id ON public_transit.runtime_platform_state(clock_tick DESC , station_id, route_id)
 
   {% endset %}
 

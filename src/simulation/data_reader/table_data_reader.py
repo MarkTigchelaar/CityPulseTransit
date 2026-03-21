@@ -60,7 +60,7 @@ class TableDataReader(DataReader):
             from
                 {DB_SCHEMA}.stg_train_state
             where
-                clock_tick = {self._latest_tick}
+                clock_tick <= {self._latest_tick}
             """
         return pd.read_sql_query(query, self.engine)
 

@@ -22,26 +22,16 @@ This project was built to demonstrate data engineering design patterns, specific
 ### 1. Single-Command CI/CD Emulator (`build.py`)
 To ensure ease of use, this project is built by running a single script. Executing the python build script isolates the environment, installs dependencies, executes a pytest suite, provisions Docker containers, and runs dbt build, mimicking a clean CI/CD deployment pipeline.
 
-### 2. Idempotent Disaster Recovery
-If the analytical layer crashes, the data consumer can safely replay the entire Kafka retention window with minimal changes. By default, the simulation recovers from inturruption, and continues onward.
-
-Architectural Note / Known Limitation: Halting the simulation mid-tick (e.g., via a hard SIGINT or Ctrl-C) can occasionally result in a split-brain state.
-
-A passenger's internal route history can desync from the physical train location. 
-This issue is likely fixed, but full testing is still needed, as of March 5, 2026. Will complete test March 6, 2026, and update.
-
-For the scope of this demonstration, a clean initialization via the build script is recommended after a hard interruption.
-
-### 3. Decoupled "Clean Slate" UI Architecture
+### 2. Decoupled "Clean Slate" UI Architecture
 The presentation layer (Streamlit) is strictly decoupled from the simulation and the message broker. By polling exclusively from dbt's materialized dimensional marts, it cleanly visualizes the live state of the simulation.
 
-### 4. Metric Aggregation via dbt
+### 3. Metric Aggregation via dbt
 Raw telemetry—such as average wait times, live train headways, and passenger movements—is streamed to Postgres and processed into mart-grade analytical views defined using dbt.
 
-### 5. Finite State Machine Routing
+### 4. Finite State Machine Routing
 The transit logic relies on static routing rules. Each entity (trains and passengers) utilizes a finite state machine to navigate the network correctly, including passengers coordinating transfers across multiple train routes.
 
-### 6. Small Amounts Of Non Determinism
+### 5. Small Amounts Of Non Determinism
 To simulate realistic telemetry, the system introduces controlled non-determinism. Passengers experience variable delays at stations due to traffic, and trains can be interleaved with fleets from other routes while maintaining strict ordering within their own routing groups. Fundamental behaviors remain fixed: passengers actively navigate between trains, and fleets continuously loop their assigned routes.
 
 ---
@@ -76,6 +66,8 @@ On Windows:
 ### 4. Run the system
 ```
 python run.py
+NOTE: ctrl + C drops the data and tears down the containers,
+as does letting the sim run to completion.
 ```
 
 ### 5. Open dashboards, and data dictionary

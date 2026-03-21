@@ -4,6 +4,7 @@ import time
 import signal
 import os
 import psycopg2
+from src.script_helpers import run_command
 from src.config import (
     POSTGRES_DB,
     POSTGRES_USER,
@@ -29,17 +30,21 @@ def cleanup(signum=None, frame=None):
                     os.killpg(os.getpgid(p.pid), signal.SIGTERM)
             except Exception:
                 pass  # Process might have already died
+    purge_runtime_tables()
 
-    print("[CLEANUP] System Offline. State is safely parked.")
+    # 3. Spin down Docker Containers
+    print("\n[TEARDOWN] Spinning down Docker Infrastructure...")
+    run_command(
+        "docker compose down -v",
+        "Shutting off containers",
+        continue_if_failed=True,
+    )
+    print("[CLEANUP] System Offline.")
     sys.exit(0)
 
 
-# A clock tick in the simulation can be interrupted
-# before all components update the db.
-# This is data corruption
-# Trimming off the state of the last 2 clock ticks eliminates
-# the potential of this occurring.
-def trim_latest_clock_ticks():
+def purge_runtime_tables():
+    print("\n[TEARDOWN] Purging all runtime database state...")
     try:
         conn = psycopg2.connect(
             dbname=POSTGRES_DB,
@@ -50,43 +55,34 @@ def trim_latest_clock_ticks():
         )
         cur = conn.cursor()
 
-        trimming_query = f"""
-            DELETE
-            FROM
-                {DB_SCHEMA}.runtime_world_clock_state
-            WHERE
-                clock_tick >= (
-                SELECT 
-                    MAX(clock_tick) - 1
-                FROM
-                    {DB_SCHEMA}.runtime_world_clock_state
-            );
+        purge_query = f"""
+            TRUNCATE TABLE 
+                {DB_SCHEMA}.runtime_world_clock_state,
+                {DB_SCHEMA}.runtime_passenger_state,
+                {DB_SCHEMA}.runtime_train_state,
+                {DB_SCHEMA}.runtime_platform_state,
+                {DB_SCHEMA}.runtime_rail_segment_state,
+                {DB_SCHEMA}.station_passenger_stats
+            CASCADE;
         """
-        cur.execute(trimming_query)
-        deleted_rows = cur.rowcount
+        cur.execute(purge_query)
         conn.commit()
 
         cur.close()
         conn.close()
-
-        if deleted_rows > 0:
-            print("Successfully removed the most recent tick.")
-        else:
-            print("Clock table is empty.")
+        print("  -> Database runtime tables successfully purged.")
 
     except Exception as e:
-        print(f"Could not trim clock tick (first run?): {e}")
+        print(f"  -> Could not purge database tables: {e}")
 
 
 def main():
-    # Register the 'Ctrl+C' handler AND Docker's Stop handler
     signal.signal(signal.SIGINT, cleanup)
     signal.signal(signal.SIGTERM, cleanup)
 
-    print("🚂 CityPulse Transit System Initializing...")
-    trim_latest_clock_ticks()
+    print("CityPulse Transit System Initializing...")
+    purge_runtime_tables()
 
-    # Cross-platform kwargs for process grouping
     popen_kwargs = {}
     if sys.platform == 'win32':
         popen_kwargs['creationflags'] = subprocess.CREATE_NEW_PROCESS_GROUP
@@ -142,6 +138,7 @@ def main():
     print("dbt Dictionary: http://localhost:8081")
     print("Kafka Dashboard:   http://localhost:8080")
     print("Press Ctrl+C to safely stop the simulation.")
+    print("WARNING: Stopping, or ending the simulation requires re running build first!")
     print("=" * 50 + "\n")
 
     try:
@@ -151,7 +148,7 @@ def main():
                 print("\nSimulation process ended cleaning up...")
                 cleanup()
     except KeyboardInterrupt:
-        pass  # Caught by the signal handler, do nothing
+        cleanup()
 
 
 if __name__ == "__main__":
