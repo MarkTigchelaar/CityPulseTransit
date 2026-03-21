@@ -83,7 +83,6 @@ Kafka Dashboard:   http://localhost:8080
 
 
 ### AI Pair Programming
-```
 In building CityPulseTransit, I utilized Gemini as an accelerator and architectural sounding board. 
 
 While the core system design, domain logic, and data pipelines are my own, 
@@ -93,4 +92,3 @@ Using an LLM to discuss the trade-offs of various event-driven patterns allowed 
 
 However, I did find that Gemini needed to be tightly supervised.
 My judgement and careful observation kept the project from being derailed by hallucinations, as well as sychophancy, the second being more pernicious issue.
-```
